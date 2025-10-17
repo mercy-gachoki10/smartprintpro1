@@ -57,6 +57,6 @@ Troubleshooting
 - If `psycopg2-binary` fails on your platform, use `pip install psycopg2-binary==2.9.11` or install PostgreSQL client libraries and use `psycopg2`.
 
 License
-MIT (replace with your preferred license)
+MIT
 
 
