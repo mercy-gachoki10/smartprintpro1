@@ -1,38 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SmartPrint Pro — Find Local Print Shops</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-</head>
-<body>
-  <!-- HEADER -->
-  <header>
-    <div class="brand">
-      <div class="logo-area">
-        <!-- Image logo fallback: an inline SVG appears if file missing -->
-        <img src="assets/images/logo.png" alt="SmartPrint Pro logo" class="logo-img" style="display:block" onerror="this.style.display='none';document.getElementById('svgLogo').style.display='inline-block'">
-        <svg id="svgLogo" width="52" height="52" viewBox="0 0 100 100" style="display:none;border-radius:10px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SP logo">
-          <rect rx="18" ry="18" width="100" height="100" fill="#D4AF37"/>
-          <text x="50" y="60" font-family="Arial" font-weight="700" font-size="46" text-anchor="middle" fill="#000">SP</text>
-        </svg>
-      </div>
+{% extends "base.html" %}
 
-      <div>
-        <div style="font-weight:800">SmartPrint Pro</div>
-        <div style="font-size:12px;opacity:0.9">Find print shops • Upload • Get quotes • Pay & Track</div>
-      </div>
-    </div>
+{% block title %}SmartPrint Pro — Find Local Print Shops{% endblock %}
 
-    <nav>
-      <a href="#" onclick="scrollToSection('vendors')">Vendors</a>
-      <a href="#" onclick="scrollToSection('how')">How it works</a>
-      <a href="#" onclick="scrollToSection('features')">Features</a>
-      <a href="login.html">Login</a>
-    </nav>
-  </header>
-
+{% block content %}
   <!-- HERO -->
   <section class="hero">
     <h1>Find trusted local print shops — fast</h1>
@@ -132,42 +102,12 @@
 
   </main>
 
-  <!-- Footer -->
-  <footer>
-    © SmartPrint Pro — connecting customers with local print shops • BoldPrint (demo)
-  </footer>
-
-  <!-- CONTACT MODAL -->
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true">
-    <div class="modal" role="document">
-      <button class="closeBtn" onclick="closeModal()">✕</button>
-      <h3 id="modalTitle">Contact vendor</h3>
-      <p id="modalText" style="color:var(--muted)">Send a quick message to this vendor (demo).</p>
-      <form onsubmit="event.preventDefault();alert('Message sent (demo)');closeModal();">
-        <input id="cname" placeholder="Your name" style="width:100%;padding:8px;margin-top:8px;border-radius:8px;border:1px solid #ddd">
-        <input id="cemail" placeholder="Your email or phone" style="width:100%;padding:8px;margin-top:8px;border-radius:8px;border:1px solid #ddd">
-        <textarea id="cmsg" placeholder="Your message" style="width:100%;padding:8px;margin-top:8px;border-radius:8px;border:1px solid #ddd;height:80px"></textarea>
-        <button style="margin-top:10px;background:var(--purple);color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer">Send</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- small scripts: search, modal, quick nav -->
+  {% block extra_js %}
   <script>
-    // scroll helper
-    function scrollToSection(id){
-
-      const el = document.getElementById(id);
-
-      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
-
-    }
-
     // quick search (categories)
     function quickSearch(term){
       document.getElementById('q').value = term;
       filterVendors();
-
     }
 
     // search filter for vendor cards
@@ -176,33 +116,13 @@
     qInput.addEventListener('input', filterVendors);
 
     function filterVendors(){
-
       const query = qInput.value.trim().toLowerCase();
-
       document.querySelectorAll('.vendor').forEach(card => {
-
         const tags = (card.dataset.tags || '').toLowerCase();
-
         const text = card.innerText.toLowerCase();
-
         const match = query === '' || tags.includes(query) || text.includes(query);
-
         card.style.display = match ? '' : 'none';
-
       });
-    }
-
-    // modal logic
-    function openContact(name){
-
-      document.getElementById('modalTitle').innerText = 'Contact ' + name;
-      document.getElementById('modalText').innerText = 'Send a quick message to ' + name + ' (demo).';
-      document.getElementById('modalBackdrop').style.display = 'flex';
-
-    }
-    function closeModal(){
-      document.getElementById('modalBackdrop').style.display = 'none';
-
     }
 
     // view shop (demo)
@@ -210,5 +130,5 @@
       alert('Open shop page for: ' + name + ' (demo). In full app this goes to the vendor profile.)');
     }
   </script>
-</body>
-</html>
+  {% endblock %}
+{% endblock %}

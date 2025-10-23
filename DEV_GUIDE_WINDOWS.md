@@ -62,10 +62,48 @@ Open your browser to `http://127.0.0.1:5000`.
 - Add styles: edit `static/css/main.css`.
 - Add images: place them under `static/assets/images/` and reference with `{{ url_for('static', filename='assets/images/your.png') }}`.
 
-9) Optional: Connect to PostgreSQL
+9) Git Workflow: Creating and Merging Branches
+**Create a new branch for your feature:**
+```powershell
+git switch -c feature/my-feature
+# or if using older Git: git checkout -b feature/my-feature
+```
+
+**Make your changes and commit:**
+```powershell
+git add .
+git commit -m "Description of changes"
+```
+
+**Push your branch to the remote repository:**
+```powershell
+git push -u origin feature/my-feature
+```
+
+**Merge your branch back to main (after code review/testing):**
+```powershell
+# Switch to main branch
+git switch main
+# or: git checkout main
+
+# Pull latest changes from remote
+git pull origin main
+
+# Merge your feature branch
+git merge feature/my-feature
+
+# Push the merged changes
+git push origin main
+
+# (Optional) Delete the feature branch locally and remotely
+git branch -d feature/my-feature
+git push origin --delete feature/my-feature
+```
+
+10) Optional: Connect to PostgreSQL
 If you want to test DB connections, install PostgreSQL locally or use Docker, then update credentials in `connect_db()` inside `app.py`.
 
-10) Troubleshooting
+11) Troubleshooting
 - Virtual env activation fails: ensure the execution policy change above, or use CMD: `venv\Scripts\activate.bat`.
 - Flask not found: confirm the venv is active and `pip show flask` displays a version.
 - Port already in use: specify a different port with `-p`.

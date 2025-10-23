@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}How It Works — SmartPrint Pro{% endblock %}
+
+{% block content %}
+  <!-- HERO -->
+  <section class="hero">
+    <h1>How SmartPrint Pro Works</h1>
+    <p>Three simple steps from finding the right vendor to holding your printed product in your hands.</p>
+  </section>
+
+  <!-- MAIN CONTENT -->
+  <main class="container">
+    
+    <!-- Step-by-step process -->
+    <section style="margin-top:28px">
+      <h3 style="color:var(--purple);text-align:center">Our Simple 3-Step Process</h3>
+      
+      <div style="margin-top:40px;max-width:900px;margin-left:auto;margin-right:auto">
+        
+        <!-- Step 1 -->
+        <div style="display:flex;gap:20px;margin-bottom:40px;align-items:flex-start">
+          <div style="min-width:60px;width:60px;height:60px;background:var(--purple);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800">1</div>
+          <div style="flex:1">
+            <h4 style="margin:0;margin-top:6px;color:var(--purple)">🔍 Search & Find</h4>
+            <p style="color:var(--muted);line-height:1.6">
+              Browse our network of trusted print vendors across Kenya. Use location filters, service categories, or search by name. View vendor profiles, ratings, reviews, and past work samples.
+            </p>
+            <div style="background:#faf8ff;padding:12px;border-radius:8px;border-left:4px solid var(--purple)">
+              <strong style="color:var(--purple)">Pro tip:</strong> Check vendor ratings and delivery times. Read customer reviews for quality insights.
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div style="display:flex;gap:20px;margin-bottom:40px;align-items:flex-start">
+          <div style="min-width:60px;width:60px;height:60px;background:var(--purple);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800">2</div>
+          <div style="flex:1">
+            <h4 style="margin:0;margin-top:6px;color:var(--purple)">📤 Upload & Quote</h4>
+            <p style="color:var(--muted);line-height:1.6">
+              Upload your design files (PDF, AI, PSD, JPG, PNG, etc.). Our AI file-check system automatically reviews your files for resolution, color profiles, and format issues. Get instant quotes from vendors with pricing broken down by materials, colors, quantity, and rush fees.
+            </p>
+            <div style="background:#faf8ff;padding:12px;border-radius:8px;border-left:4px solid var(--purple)">
+              <strong style="color:var(--purple)">Pro tip:</strong> Get quotes from multiple vendors to compare pricing and services. Use our comparison tool to find the best value.
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div style="display:flex;gap:20px;margin-bottom:40px;align-items:flex-start">
+          <div style="min-width:60px;width:60px;height:60px;background:var(--purple);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800">3</div>
+          <div style="flex:1">
+            <h4 style="margin:0;margin-top:6px;color:var(--purple)">💳 Pay & Track</h4>
+            <p style="color:var(--muted);line-height:1.6">
+              Choose your preferred vendor and payment method (M-Pesa, card, bank transfer). Receive instant order confirmation. Track your order in real-time as it moves through design review, production, and delivery stages. Communicate directly with vendors for any updates or modifications.
+            </p>
+            <div style="background:#faf8ff;padding:12px;border-radius:8px;border-left:4px solid var(--purple)">
+              <strong style="color:var(--purple)">Pro tip:</strong> Enable notifications to stay updated on your order status. Pick up or arrange delivery once your order is ready.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Detailed Features -->
+    <section style="margin-top:48px">
+      <h3 style="color:var(--purple);text-align:center">What Makes SmartPrint Pro Different?</h3>
+      <div class="features" style="margin-top:24px">
+        <div class="feature">
+          <strong>🚀 Speed</strong>
+          <div style="color:var(--muted);margin-top:6px">Get instant quotes in minutes, not hours. Most orders ready for pickup within 24-48 hours.</div>
+        </div>
+        <div class="feature">
+          <strong>💰 Transparency</strong>
+          <div style="color:var(--muted);margin-top:6px">No hidden charges. All pricing is itemized and shown before you confirm. Know exactly what you're paying for.</div>
+        </div>
+        <div class="feature">
+          <strong>🌍 Local</strong>
+          <div style="color:var(--muted);margin-top:6px">Support local print businesses across Kenya. Build relationships with vendors in your community.</div>
+        </div>
+        <div class="feature">
+          <strong>🔒 Secure</strong>
+          <div style="color:var(--muted);margin-top:6px">Bank-level encryption. Your files and payment data are protected. M-Pesa sandbox-tested for safety.</div>
+        </div>
+        <div class="feature">
+          <strong>📱 Easy</strong>
+          <div style="color:var(--muted);margin-top:6px">Intuitive interface. No complicated forms or confusing processes. Find, quote, and order in minutes.</div>
+        </div>
+        <div class="feature">
+          <strong>⭐ Quality</strong>
+          <div style="color:var(--muted);margin-top:6px">All vendors are rated and reviewed by customers. Our quality guarantee ensures your satisfaction.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section style="margin-top:48px">
+      <h3 style="color:var(--purple);text-align:center">Frequently Asked Questions</h3>
+      
+      <div style="margin-top:24px;max-width:800px;margin-left:auto;margin-right:auto">
+        
+        <div style="margin-bottom:20px">
+          <h4 style="color:var(--purple);cursor:pointer;user-select:none" onclick="toggleFaq(this)">❓ How long does it take to get a quote?</h4>
+          <p id="faq1" style="color:var(--muted);line-height:1.6;display:none;margin-top:8px">
+            Most vendors provide instant quotes through our system within 30 seconds to 2 minutes. For standard orders (uniforms, banners, t-shirts), you'll see pricing immediately after uploading your design. For complex projects (large format printing, custom packaging, specialty items), vendors may request additional details like dimensions, material specifications, or color samples. Typical response time for custom quotes is 2-4 hours during business hours (8am-6pm EAT). Rush quote requests are processed within 1 hour. All quotes include itemized pricing for materials, setup, labor, and any applicable rush fees.
+          </p>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <h4 style="color:var(--purple);cursor:pointer;user-select:none" onclick="toggleFaq(this)">❓ What file formats do you accept?</h4>
+          <p id="faq2" style="color:var(--muted);line-height:1.6;display:none;margin-top:8px">
+            We accept all major design file formats: <strong>PDF, Adobe Illustrator (AI), Photoshop (PSD), InDesign (INDD), Corel Draw (CDR), EPS, SVG, JPG, PNG, GIF, and BMP</strong>. PDF is our recommended format as it preserves all fonts and design elements. Our AI file-check system automatically scans uploaded files for: resolution (minimum 300 DPI for print), color mode (RGB vs CMYK), missing fonts, and oversized dimensions. If issues are detected, you'll receive specific recommendations before submitting to the vendor. Most vendors can work with native files, but PDF ensures best results. File size limit is 100MB per upload.
+          </p>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <h4 style="color:var(--purple);cursor:pointer;user-select:none" onclick="toggleFaq(this)">❓ Is M-Pesa payment secure?</h4>
+          <p id="faq3" style="color:var(--muted);line-height:1.6;display:none;margin-top:8px">
+            Yes, absolutely. Our M-Pesa integration uses <strong>bank-level encryption (SSL 256-bit)</strong> and has been sandbox-tested for security. We do not store your M-Pesa PIN or phone number credentials—you authenticate directly with Safaricom's secure servers. All transactions are PCI-DSS compliant. Your personal and payment data are encrypted both in transit and at rest. We also offer <strong>card payments (Visa/Mastercard), bank transfers, and manual M-Pesa deposits</strong> as alternatives. Each transaction generates an invoice and receipt for your records. Refunds are processed within 2-3 business days to your original payment method.
+          </p>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <h4 style="color:var(--purple);cursor:pointer;user-select:none" onclick="toggleFaq(this)">❓ Can I track my order in real-time?</h4>
+          <p id="faq4" style="color:var(--muted);line-height:1.6;display:none;margin-top:8px">
+            Yes! Once you place an order and payment is confirmed, your order enters our tracking system. You can monitor it through <strong>5 stages: File Review → Design Approval → Production → Quality Check → Ready for Collection/Delivery</strong>. Each stage shows estimated time remaining. For delivery orders, GPS tracking is available and you'll receive notifications via SMS and email at each milestone. Vendors can also send custom updates—for example, "Your design is approved, printing starts tomorrow." You can message the vendor directly from the SmartPrint Pro dashboard with questions or modification requests, and they'll respond within 2 hours during business hours.
+          </p>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <h4 style="color:var(--purple);cursor:pointer;user-select:none" onclick="toggleFaq(this)">❓ What if I'm not happy with my order?</h4>
+          <p id="faq4b" style="color:var(--muted);line-height:1.6;display:none;margin-top:8px">
+            Each vendor on SmartPrint Pro maintains a satisfaction guarantee. If your printed order doesn't meet expectations—quality issues, color mismatch, wrong dimensions, or design errors—contact the vendor within 48 hours of receiving your order. Document the issue with photos if applicable. Most vendors will: <strong>(1) offer a reprint at no cost, (2) provide partial refund, or (3) arrange replacement</strong>. If vendor and customer cannot resolve the issue, SmartPrint Pro mediates and helps facilitate a resolution. Vendor reputation scores include satisfaction ratings from past customers, so you can see how well they handle issues before ordering. Over 97% of disputes are resolved to customer satisfaction within 5 business days.
+          </p>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <h4 style="color:var(--purple);cursor:pointer;user-select:none" onclick="toggleFaq(this)">❓ Can I get rush orders?</h4>
+          <p id="faq6" style="color:var(--muted);line-height:1.6;display:none;margin-top:8px">
+            Yes! When requesting a quote, you can select your preferred timeline: <strong>Standard (3-5 days), Urgent (1-2 days), or Express (same-day or next-day)</strong>. Rush pricing varies by vendor and order complexity, but typically adds 15-50% to the base cost. For example: standard t-shirt printing KES 2,000 might be KES 2,500 for urgent or KES 3,000 for express. Some vendors specialize in rush services and maintain spare capacity. Express orders (same-day printing) are available for items like banners, flyers, and t-shirts from vendors in Nairobi and Mombasa. Note: Design approval still takes 1-2 hours even on rush orders—vendors need to verify your design before printing. Emergency requests should be communicated directly to the vendor.
+          </p>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <h4 style="color:var(--purple);cursor:pointer;user-select:none" onclick="toggleFaq(this)">❓ Is there a minimum order quantity?</h4>
+          <p id="faq7" style="color:var(--muted);line-height:1.6;display:none;margin-top:8px">
+            Minimums vary widely by vendor and service type. <strong>Some vendors specialize in single-item orders</strong> (1 t-shirt, 1 mug, 1 business card pack), while others focus on bulk printing and have minimums of 50-100+ units. Our vendor filters let you search for "single-item" or "low-minimum" services. Typical minimums: Stickers (10 units), Business cards (50), T-shirts (1 or 5 depending on vendor), Banners (1), Mugs (1), Uniforms (5), Branded packaging (100+). When you get quotes, each vendor will clearly state their minimum quantities. If you need just 1 or 2 items, filter by vendors offering "short-run printing" or "on-demand services" in Nairobi or Mombasa.
+          </p>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <h4 style="color:var(--purple);cursor:pointer;user-select:none" onclick="toggleFaq(this)">❓ Do you deliver to all areas of Kenya?</h4>
+          <p id="faq8" style="color:var(--muted);line-height:1.6;display:none;margin-top:8px">
+            Most vendors deliver within <strong>Nairobi, Mombasa, Kisumu, Nakuru, and Eldoret</strong>. Some offer nationwide delivery for an additional flat fee (typically KES 500-2,000 depending on distance). Delivery times: Same-day or next-day within Nairobi CBD, 1-2 days to major cities, 2-5 days to rural areas. <strong>Pickup is always free</strong> at vendor locations during business hours (8am-6pm). For areas outside major cities, you can arrange via: (1) vendors' delivery partners (added cost), (2) your own courier service, or (3) coordination with the vendor for alternative methods. When requesting a quote, specify your location and we'll show you vendors who can serve you. All delivery fees are transparent and quoted upfront before you order.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section style="margin-top:48px;background:linear-gradient(135deg, var(--purple), #571590);color:#fff;padding:32px;border-radius:12px;text-align:center">
+      <h3>Ready to Get Started?</h3>
+      <p>Find your perfect print vendor in just a few clicks.</p>
+      <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="/vendors" style="background:var(--gold);color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">Browse Vendors</a>
+        <a href="/" style="background:#fff;color:var(--purple);padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">Back to Home</a>
+      </div>
+    </section>
+
+  </main>
+
+  {% block extra_js %}
+  <script>
+    function toggleFaq(element) {
+      // Get the next sibling p element which contains the answer
+      let answerElement = element.nextElementSibling;
+      
+      // Toggle display between none and block
+      if (answerElement && answerElement.tagName === 'P') {
+        if (answerElement.style.display === 'none' || answerElement.style.display === '') {
+          answerElement.style.display = 'block';
+          element.style.fontWeight = '700';
+          element.style.color = 'var(--purple)';
+        } else {
+          answerElement.style.display = 'none';
+          element.style.fontWeight = '600';
+          element.style.color = 'var(--purple)';
+        }
+      }
+    }
+  </script>
+  {% endblock %}
+{% endblock %}

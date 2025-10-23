@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Login — SmartPrint Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+  .login-container {
+    max-width: 450px;
+    margin: 60px auto;
+    padding: 0 20px;
+  }
+  
+  .login-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+  }
+  
+  .user-type-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  
+  .user-type-btn {
+    padding: 12px;
+    border: 2px solid #e8e6f2;
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s;
+    color: var(--muted);
+  }
+  
+  .user-type-btn:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+  }
+  
+  .user-type-btn.active {
+    background: var(--purple);
+    color: #fff;
+    border-color: var(--purple);
+  }
+  
+  .form-group {
+    margin-bottom: 18px;
+  }
+  
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--purple);
+    font-size: 14px;
+  }
+  
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e8e6f2;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px rgba(107, 33, 168, 0.1);
+  }
+  
+  .btn-login {
+    width: 100%;
+    padding: 12px;
+    background: var(--purple);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+    min-height: 44px;
+  }
+  
+  .btn-login:hover {
+    background: #571590;
+  }
+  
+  .btn-login:active {
+    transform: scale(0.98);
+  }
+  
+  .divider {
+    text-align: center;
+    margin: 24px 0;
+    position: relative;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  
+  .divider::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: #e8e6f2;
+    z-index: 0;
+  }
+  
+  .divider span {
+    position: relative;
+    background: #fff;
+    padding: 0 8px;
+    z-index: 1;
+  }
+  
+  .social-login {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  .btn-social {
+    padding: 10px;
+    border: 1px solid #e8e6f2;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s;
+    min-height: 44px;
+  }
+  
+  .btn-social:hover {
+    background: #faf8ff;
+    border-color: var(--purple);
+  }
+  
+  .forgot-password {
+    text-align: right;
+    margin-bottom: 18px;
+  }
+  
+  .forgot-password a {
+    color: var(--purple);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  
+  .forgot-password a:hover {
+    text-decoration: underline;
+  }
+  
+  .signup-link {
+    text-align: center;
+    margin-top: 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  
+  .signup-link a {
+    color: var(--purple);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  
+  .signup-link a:hover {
+    text-decoration: underline;
+  }
+  
+  .user-type-info {
+    margin-top: 20px;
+    padding: 12px;
+    background: #faf8ff;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    border-left: 4px solid var(--purple);
+  }
+  
+  @media(max-width:600px) {
+    .login-container {
+      margin: 30px auto;
+    }
+    
+    .login-card {
+      padding: 20px;
+    }
+    
+    .user-type-selector {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    
+    .user-type-btn {
+      padding: 10px;
+      font-size: 12px;
+    }
+    
+    .form-group input {
+      font-size: 16px;
+    }
+    
+    .social-login {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="login-container">
+    <div class="login-card">
+      
+      <!-- User Type Selector -->
+      <h3 style="margin: 0 0 16px 0; color: var(--purple); text-align: center;">Select Account Type</h3>
+      <div class="user-type-selector">
+        <button class="user-type-btn active" onclick="selectUserType('customer', this)">
+          👤 Customer
+        </button>
+        <button class="user-type-btn" onclick="selectUserType('employee', this)">
+          👨‍💼 Employee
+        </button>
+        <button class="user-type-btn" onclick="selectUserType('admin', this)">
+          ⚙️ Administrator
+        </button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginForm">
+        <h3 style="margin: 0 0 6px 0; color: var(--purple);">Welcome Back</h3>
+        <p style="color: var(--muted); font-size: 13px; margin: 0 0 24px 0;" id="userTypeMessage">Login to your SmartPrint Pro customer account</p>
+
+        <form onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="email">Email or Phone Number</label>
+            <input type="text" id="email" placeholder="you@example.com or +254..." required>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" required>
+          </div>
+
+          <div class="forgot-password">
+            <a href="#">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn-login">Login</button>
+        </form>
+
+        <div class="divider"><span>Or continue with</span></div>
+
+        <div class="social-login">
+          <button type="button" class="btn-social" onclick="socialLogin('google')">📧 Google</button>
+          <button type="button" class="btn-social" onclick="socialLogin('phone')">📱 Phone</button>
+        </div>
+
+        <div class="signup-link">
+          Don't have an account? <a href="/signup">Create one here</a>
+        </div>
+
+        <div class="user-type-info" id="userTypeInfo">
+          <strong>👤 Customer Account:</strong> Browse vendors, upload designs, get quotes, and track orders.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  {% block extra_js %}
+  <script>
+    let selectedUserType = 'customer';
+
+    function selectUserType(type, button) {
+      selectedUserType = type;
+      
+      // Update active button
+      document.querySelectorAll('.user-type-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      button.classList.add('active');
+      
+      // Update messages based on user type
+      const messages = {
+        customer: {
+          title: 'Login to your SmartPrint Pro customer account',
+          info: '<strong>👤 Customer Account:</strong> Browse vendors, upload designs, get quotes, and track orders.'
+        },
+        employee: {
+          title: 'Login to your SmartPrint Pro employee dashboard',
+          info: '<strong>👨‍💼 Employee Account:</strong> Manage customer orders, process quotes, and track shipments.'
+        },
+        admin: {
+          title: 'Login to SmartPrint Pro administration panel',
+          info: '<strong>⚙️ Administrator Account:</strong> Manage vendors, users, orders, and system settings.'
+        }
+      };
+      
+      document.getElementById('userTypeMessage').textContent = messages[type].title;
+      document.getElementById('userTypeInfo').innerHTML = messages[type].info;
+    }
+
+    function handleLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      alert(`Login attempt (demo):\nAccount Type: ${selectedUserType.toUpperCase()}\nEmail: ${email}\nPassword: ****\n\nThis would authenticate with the backend in a real app.`);
+    }
+
+    function socialLogin(provider) {
+      alert(`${provider.toUpperCase()} login as ${selectedUserType} (demo)\n\nIn a real app, this would redirect to the OAuth provider.`);
+    }
+  </script>
+  {% endblock %}
+{% endblock %}

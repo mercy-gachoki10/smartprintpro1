@@ -9,48 +9,142 @@
 *{box-sizing:border-box}
 body{font-family:Inter,Arial,Helvetica,sans-serif;margin:0;background:var(--bg);color:var(--black);-webkit-font-smoothing:antialiased}
 /* Header */
-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(90deg,var(--purple), #571590);color:var(--white)}
+header{position:sticky;top:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(90deg,var(--purple), #571590);color:var(--white);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
 
 .brand{display:flex;align-items:center;gap:12px}
 .logo-area{display:flex;align-items:center;gap:10px}
 .logo-img{width:52px;height:52px;border-radius:10px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--black)}
-nav a{color:rgba(255,255,255,0.95);margin-left:14px;text-decoration:none;font-weight:600}
+nav{display:flex;align-items:center;gap:12px}
+nav a{color:rgba(255,255,255,0.95);text-decoration:none;font-weight:600;padding:8px 12px;border-radius:6px;transition:background 0.2s}
+nav a:hover{background:rgba(255,255,255,0.1)}
 /* Hero */
 .hero{padding:36px 18px;text-align:center}
 .hero h1{font-size:32px;margin:6px 0;color:var(--purple)}
 .hero p{max-width:760px;margin:10px auto;color:var(--muted)}
 .searchBox{margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.searchBox input{padding:12px 14px;border-radius:10px;border:1px solid #e8e6f2;width:420px;min-width:180px}
-.searchBox button{background:var(--purple);color:var(--white);padding:12px 18px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
+.searchBox input{padding:12px 14px;border-radius:10px;border:1px solid #e8e6f2;width:420px;min-width:180px;font-size:16px}
+.searchBox button{background:var(--purple);color:var(--white);padding:12px 18px;border-radius:10px;border:none;font-weight:700;cursor:pointer;transition:background 0.2s}
+.searchBox button:hover{background:#571590}
+.searchBox button:active{transform:scale(0.98)}
 /* categories row */
 .categories{display:flex;gap:10px;justify-content:center;margin:20px 0;flex-wrap:wrap}
-.cat{background:var(--white);padding:10px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(107,33,168,0.06);font-weight:600}
+.cat{background:var(--white);padding:10px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(107,33,168,0.06);font-weight:600;cursor:pointer;transition:all 0.2s;user-select:none}
+.cat:hover{background:var(--gold);color:#000}
+.cat:active{transform:scale(0.95)}
 /* main container */
 .container{max-width:1100px;margin:18px auto;padding:0 18px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-.vendor{background:#fff;border-radius:12px;padding:14px;box-shadow:0 8px 30px rgba(16,16,32,0.04);display:flex;flex-direction:column;justify-content:space-between;min-height:150px}
+.vendor{background:#fff;border-radius:12px;padding:14px;box-shadow:0 8px 30px rgba(16,16,32,0.04);display:flex;flex-direction:column;justify-content:space-between;min-height:150px;transition:transform 0.2s,box-shadow 0.2s}
+.vendor:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(16,16,32,0.12)}
 .vendor .title{display:flex;align-items:center;gap:12px}
-.vendor .logoSmall{width:54px;height:54px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--black)}
-.vendor h4{margin:0}
+.vendor .logoSmall{width:54px;height:54px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--black);min-width:54px}
+.vendor h4{margin:0;font-size:16px}
 .vendor .meta{margin-top:10px;color:var(--muted);font-size:13px}
-.vendor button{margin-top:12px;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+.vendor button{margin-top:12px;padding:10px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:14px;transition:all 0.2s;min-height:44px}
 .viewBtn{background:var(--purple);color:#fff}
+.viewBtn:hover{background:#571590;transform:translateY(-2px)}
 .visitBtn{background:var(--gold);color:#000}
+.visitBtn:hover{background:#e8c050;transform:translateY(-2px)}
 /* how it works */
 .how{display:flex;gap:12px;justify-content:center;margin:34px 0;flex-wrap:wrap}
-.step{background:#fff;padding:18px;border-radius:12px;min-width:220px;box-shadow:0 8px 30px rgba(16,16,32,0.04)}
+.step{background:#fff;padding:18px;border-radius:12px;min-width:220px;box-shadow:0 8px 30px rgba(16,16,32,0.04);transition:transform 0.2s}
+.step:hover{transform:translateY(-4px)}
 /* features */
 .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
-.feature{background:#fff;padding:14px;border-radius:10px;box-shadow:0 8px 30px rgba(16,16,32,0.03)}
+.feature{background:#fff;padding:14px;border-radius:10px;box-shadow:0 8px 30px rgba(16,16,32,0.03);transition:transform 0.2s}
+.feature:hover{transform:translateY(-2px)}
 /* footer */
-footer{background:#111;color:#dcd9e8;padding:22px;text-align:center;margin-top:30px}
+footer{position:sticky;bottom:0;background:#111;color:#dcd9e8;padding:22px;text-align:center;margin-top:30px;box-shadow:0 -2px 8px rgba(0,0,0,0.1)}
 /* modal */
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center}
-.modal{background:#fff;padding:20px;border-radius:12px;width:320px;box-shadow:0 12px 40px rgba(0,0,0,0.25)}
-.closeBtn{background:none;border:none;font-weight:700;float:right;cursor:pointer}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:2000}
+.modal{background:#fff;padding:20px;border-radius:12px;width:320px;box-shadow:0 12px 40px rgba(0,0,0,0.25);max-height:90vh;overflow-y:auto}
+.closeBtn{background:none;border:none;font-weight:700;float:right;cursor:pointer;padding:8px;font-size:20px}
+/* responsive design */
+@media(max-width:768px){
+  header{flex-direction:row;gap:8px;padding:12px 10px}
+  header .brand{flex:1;min-width:200px}
+  header .brand a{gap:8px}
+  header .brand div{font-size:13px}
+  header .brand div:last-child{font-size:11px;line-height:1.2}
+  nav{flex-wrap:wrap;gap:4px;justify-content:flex-end}
+  nav a{font-size:12px;padding:6px 8px;white-space:nowrap}
+  .hero{padding:24px 12px}
+  .hero h1{font-size:24px}
+  .hero p{font-size:14px}
+  .searchBox{gap:8px;padding:0 10px}
+  .searchBox input{width:100%;min-width:auto;font-size:16px;padding:12px 10px}
+  .searchBox button{padding:12px 16px;font-size:14px;white-space:nowrap;min-height:44px}
+  .categories{gap:8px;padding:0 10px}
+  .cat{padding:8px 10px;font-size:13px;min-height:36px;display:flex;align-items:center;justify-content:center}
+  .container{padding:0 12px;margin:12px auto}
+  .grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .vendor{padding:12px;min-height:140px}
+  .vendor .logoSmall{width:48px;height:48px;font-size:12px}
+  .vendor h4{font-size:14px}
+  .vendor .meta{font-size:12px}
+  .vendor button{padding:8px 10px;font-size:12px;min-height:40px}
+  .how{gap:10px;margin:24px 0}
+  .step{min-width:100%;padding:14px}
+  .step strong{display:block;margin-bottom:8px;font-size:15px}
+  .features{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+  .feature{padding:12px;font-size:13px}
+  .feature strong{font-size:14px}
+  footer{padding:16px;font-size:12px}
+}
 @media(max-width:600px){
-  .hero h1{font-size:22px}
-  .searchBox input{width:220px}
+  header{flex-direction:row;padding:10px 8px}
+  header .brand{gap:8px}
+  header .brand a{flex-direction:column}
+  header .brand .logo-area{width:40px;height:40px}
+  header .brand .logo-img{width:40px;height:40px}
+  header .brand svg{width:40px;height:40px}
+  header .brand div:first-of-type{font-weight:700;font-size:12px}
+  header .brand div:last-of-type{font-size:10px;opacity:0.9;line-height:1.1}
+  nav{flex:1;gap:2px;justify-content:flex-end}
+  nav a{font-size:11px;padding:4px 6px;white-space:nowrap;display:block}
+  .hero{padding:16px 10px}
+  .hero h1{font-size:20px;margin:4px 0}
+  .hero p{font-size:13px;margin:6px 0}
+  .searchBox{flex-direction:column;gap:6px;padding:0 8px;margin-top:12px}
+  .searchBox input{width:100%;padding:10px 8px;font-size:16px}
+  .searchBox button{width:100%;padding:10px;font-size:13px;min-height:44px}
+  .categories{gap:6px;padding:0 8px;margin:12px 0}
+  .cat{padding:6px 8px;font-size:12px;flex:1;min-width:60px;text-align:center;min-height:36px}
+  .container{max-width:100%;margin:8px auto;padding:0 8px}
+  .grid{grid-template-columns:1fr;gap:10px}
+  .vendor{padding:12px;min-height:auto}
+  .vendor .title{flex-direction:column;align-items:flex-start;gap:10px}
+  .vendor .logoSmall{width:44px;height:44px;min-width:44px;font-size:11px}
+  .vendor h4{font-size:13px;margin:0}
+  .vendor .meta{font-size:11px;margin-top:4px}
+  .vendor button{padding:8px;font-size:12px;min-height:40px;width:48%;display:inline-block;margin:4px 2% 4px 0}
+  .how{flex-direction:column;gap:8px;margin:16px 0;padding:0 8px}
+  .step{min-width:100%;padding:12px;font-size:13px}
+  .step strong{font-size:14px}
+  .features{grid-template-columns:1fr;gap:8px;margin-top:10px}
+  .feature{padding:10px;font-size:12px}
+  .feature strong{font-size:13px}
+  .modal{width:90%;max-width:300px;padding:16px}
+  .closeBtn{padding:4px;font-size:18px}
+  footer{padding:12px 8px;font-size:11px}
+  h3{font-size:18px;margin:16px 0 10px}
+  h4{font-size:15px}
+}
+@media(max-width:400px){
+  header{padding:8px 6px}
+  header .brand{gap:6px}
+  header .brand .logo-img,header .brand svg{width:36px;height:36px}
+  header .brand div:first-of-type{font-size:11px}
+  header .brand div:last-of-type{font-size:9px}
+  nav a{font-size:10px;padding:3px 4px}
+  .hero h1{font-size:18px}
+  .hero p{font-size:12px}
+  .searchBox input{font-size:16px;padding:10px 6px}
+  .searchBox button{padding:10px 8px;font-size:12px}
+  .cat{font-size:11px;padding:4px 6px;min-width:55px}
+  .vendor button{width:47%;font-size:11px;padding:6px}
+  .feature{padding:8px;font-size:11px}
+  footer{font-size:10px;padding:10px 6px}
 }
 
 

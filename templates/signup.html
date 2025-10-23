@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up — SmartPrint Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+  .signup-container {
+    max-width: 500px;
+    margin: 60px auto;
+    padding: 0 20px;
+  }
+  
+  .signup-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+  }
+  
+  .account-type-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  
+  .account-type-btn {
+    padding: 12px;
+    border: 2px solid #e8e6f2;
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s;
+    color: var(--muted);
+    min-height: 44px;
+  }
+  
+  .account-type-btn:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+  }
+  
+  .account-type-btn.active {
+    background: var(--purple);
+    color: #fff;
+    border-color: var(--purple);
+  }
+  
+  .form-group {
+    margin-bottom: 18px;
+  }
+  
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--purple);
+    font-size: 14px;
+  }
+  
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e8e6f2;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px rgba(107, 33, 168, 0.1);
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 0;
+  }
+  
+  .btn-signup {
+    width: 100%;
+    padding: 12px;
+    background: var(--purple);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+    min-height: 44px;
+  }
+  
+  .btn-signup:hover {
+    background: #571590;
+  }
+  
+  .btn-signup:active {
+    transform: scale(0.98);
+  }
+  
+  .terms-agreement {
+    margin-bottom: 18px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  
+  .terms-agreement input {
+    width: auto;
+    margin-right: 8px;
+  }
+  
+  .terms-agreement a {
+    color: var(--purple);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  
+  .terms-agreement a:hover {
+    text-decoration: underline;
+  }
+  
+  .login-link {
+    text-align: center;
+    margin-top: 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  
+  .login-link a {
+    color: var(--purple);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  
+  .login-link a:hover {
+    text-decoration: underline;
+  }
+  
+  .account-type-description {
+    margin-top: 16px;
+    padding: 12px;
+    background: #faf8ff;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    border-left: 4px solid var(--purple);
+  }
+  
+  @media(max-width:600px) {
+    .signup-container {
+      margin: 30px auto;
+    }
+    
+    .signup-card {
+      padding: 20px;
+    }
+    
+    .account-type-selector {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    
+    .account-type-btn {
+      padding: 10px;
+      font-size: 12px;
+    }
+    
+    .form-row {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    
+    .form-row .form-group {
+      margin-bottom: 18px;
+    }
+    
+    .form-group input {
+      font-size: 16px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="signup-container">
+    <div class="signup-card">
+      
+      <!-- Account Type Selector -->
+      <h3 style="margin: 0 0 16px 0; color: var(--purple); text-align: center;">Select Account Type</h3>
+      <div class="account-type-selector">
+        <button class="account-type-btn active" onclick="selectAccountType('customer', this)">
+          👤 Customer
+        </button>
+        <button class="account-type-btn" onclick="selectAccountType('employee', this)">
+          👨‍💼 Employee
+        </button>
+        <button class="account-type-btn" onclick="selectAccountType('admin', this)">
+          ⚙️ Administrator
+        </button>
+      </div>
+
+      <!-- Signup Form -->
+      <h3 style="margin: 0 0 6px 0; color: var(--purple);">Create Your Account</h3>
+      <p style="color: var(--muted); font-size: 13px; margin: 0 0 24px 0;" id="accountTypeTitle">Join SmartPrint Pro as a customer</p>
+
+      <form onsubmit="handleSignup(event)">
+        <div class="form-group">
+          <label for="fullname">Full Name</label>
+          <input type="text" id="fullname" placeholder="John Doe" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" placeholder="you@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" placeholder="+254700000000" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="organization">Organization/Company Name</label>
+          <input type="text" id="organization" placeholder="Your business name (optional)" id="org-input">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Create a strong password" required>
+          </div>
+          <div class="form-group">
+            <label for="confirm-password">Confirm Password</label>
+            <input type="password" id="confirm-password" placeholder="Confirm password" required>
+          </div>
+        </div>
+
+        <div class="terms-agreement">
+          <input type="checkbox" id="terms" required>
+          <label for="terms">
+            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-signup">Create Account</button>
+      </form>
+
+      <div class="login-link">
+        Already have an account? <a href="/login">Login here</a>
+      </div>
+
+      <div class="account-type-description" id="accountTypeDesc">
+        <strong>👤 Customer Account:</strong> Browse vendors, upload designs, get quotes, track orders, and manage your print projects.
+      </div>
+
+    </div>
+  </div>
+
+  {% block extra_js %}
+  <script>
+    let selectedAccountType = 'customer';
+
+    function selectAccountType(type, button) {
+      selectedAccountType = type;
+      
+      // Update active button
+      document.querySelectorAll('.account-type-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      button.classList.add('active');
+      
+      // Update descriptions based on account type
+      const descriptions = {
+        customer: {
+          title: 'Join SmartPrint Pro as a customer',
+          desc: '<strong>👤 Customer Account:</strong> Browse vendors, upload designs, get quotes, track orders, and manage your print projects.'
+        },
+        employee: {
+          title: 'Join SmartPrint Pro as an employee',
+          desc: '<strong>👨‍💼 Employee Account:</strong> Process customer orders, manage quotes, handle shipments, and support customers.'
+        },
+        admin: {
+          title: 'Create an administrator account',
+          desc: '<strong>⚙️ Administrator Account:</strong> Manage vendors, users, orders, system settings, and analytics. (Requires invitation code)'
+        }
+      };
+      
+      document.getElementById('accountTypeTitle').textContent = descriptions[type].title;
+      document.getElementById('accountTypeDesc').innerHTML = descriptions[type].desc;
+      
+      // Show additional field for admin accounts
+      const orgInput = document.getElementById('org-input');
+      if (type === 'admin') {
+        orgInput.placeholder = 'Admin code required - contact system administrator';
+        orgInput.required = true;
+      } else {
+        orgInput.placeholder = 'Your business name (optional)';
+        orgInput.required = false;
+      }
+    }
+
+    function handleSignup(event) {
+      event.preventDefault();
+      const fullname = document.getElementById('fullname').value;
+      const email = document.getElementById('email').value;
+      const phone = document.getElementById('phone').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      
+      // Validate passwords match
+      if (password !== confirmPassword) {
+        alert('Passwords do not match!');
+        return;
+      }
+      
+      // Validate password strength
+      if (password.length < 8) {
+        alert('Password must be at least 8 characters long');
+        return;
+      }
+      
+      alert(`Account creation (demo):\nName: ${fullname}\nEmail: ${email}\nPhone: ${phone}\nAccount Type: ${selectedAccountType.toUpperCase()}\n\nThis would create an account in a real app.`);
+    }
+  </script>
+  {% endblock %}
+{% endblock %}
