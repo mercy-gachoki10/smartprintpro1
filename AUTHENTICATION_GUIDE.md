@@ -248,10 +248,43 @@ users table:
 - email
 - phone
 - user_type (customer/employee/admin)
-- password_hash
+- password_hash (bcrypt hashed)
 - organization (nullable)
 - created_at
 - updated_at
+```
+
+**Database Setup:**
+The application uses Flask-SQLAlchemy with SQLite (default) or PostgreSQL support. To set up the database:
+
+```bash
+# Initialize migrations (first time only)
+flask db init
+
+# Create migration
+flask db migrate -m "Create users table"
+
+# Apply migration
+flask db upgrade
+```
+
+Example model:
+```python
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+db = SQLAlchemy()
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fullname = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    user_type = db.Column(db.String(20), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    organization = db.Column(db.String(100), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 ```
 
 ---
@@ -294,13 +327,33 @@ users table:
 For production implementation:
 
 1. **Password Security**
-   - Hash passwords with bcrypt/argon2
+   - Hash passwords with bcrypt (included in requirements.txt)
    - Enforce minimum 8 characters (current)
    - Consider adding strength indicator
+   - Example implementation:
+     ```python
+     from bcrypt import hashpw, gensalt, checkpw
+     
+     # Hash password
+     password_hash = hashpw(password.encode('utf-8'), gensalt())
+     
+     # Verify password
+     is_valid = checkpw(password.encode('utf-8'), stored_hash)
+     ```
 
 2. **CSRF Protection**
    - Add CSRF tokens to forms
-   - Use Flask-WTF for form security
+   - Use Flask-WTF for form security (included in requirements.txt)
+   - Example:
+     ```python
+     from flask_wtf import FlaskForm, CSRFProtect
+     
+     csrf = CSRFProtect(app)
+     
+     class LoginForm(FlaskForm):
+         email = StringField('Email', validators=[DataRequired(), Email()])
+         password = PasswordField('Password', validators=[DataRequired()])
+     ```
 
 3. **Rate Limiting**
    - Limit login attempts (5 per minute)
@@ -313,7 +366,15 @@ For production implementation:
 5. **Session Management**
    - Secure session cookies (HttpOnly, Secure flags)
    - Implement session timeout
-   - Use Flask-Login for sessions
+   - Use Flask-Login for sessions (included in requirements.txt)
+   - Example setup:
+     ```python
+     from flask_login import LoginManager, login_user, logout_user
+     
+     login_manager = LoginManager()
+     login_manager.init_app(app)
+     login_manager.login_view = 'login'
+     ```
 
 6. **Admin Account Creation**
    - Require invitation code

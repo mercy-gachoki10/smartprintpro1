@@ -11,7 +11,13 @@ Key Features
 Tech Stack
 - Python 3.11+ (recommended)
 - Flask 3.x
-- Jinja2
+- Flask-SQLAlchemy (database ORM with SQLite support)
+- Flask-Migrate (database migrations)
+- Flask-WTF (form handling and CSRF protection)
+- Flask-Login (user session management)
+- bcrypt (password hashing)
+- Jinja2 (templating)
+- psycopg2-binary (PostgreSQL support - optional)
 
 Repository Layout
 - `app.py` – Flask app entrypoint and route definitions
@@ -34,7 +40,12 @@ Quick Start (Windows, macOS, Linux)
 2) Install dependencies
    ```bash
    pip install -U pip
-   pip install flask psycopg2-binary
+   pip install -r requirements.txt
+   ```
+   
+   Or install manually:
+   ```bash
+   pip install Flask Flask-SQLAlchemy Flask-Migrate Flask-WTF Flask-Login bcrypt psycopg2-binary
    ```
 3) Run the app
    ```bash
@@ -43,8 +54,20 @@ Quick Start (Windows, macOS, Linux)
    ```
    Visit http://127.0.0.1:5000
 
-Database (Optional)
-The code includes an example `connect_db()` using `psycopg2-binary`. You don't need a database to run the demo. If you want to connect to PostgreSQL, update credentials in `app.py`.
+Database
+The application supports both SQLite (default) and PostgreSQL:
+
+- **SQLite**: Default database, stored in `instance/app.db`. No additional setup required - works out of the box.
+- **PostgreSQL**: Optional production database. Update database credentials in `config.py` to use PostgreSQL instead of SQLite.
+
+To initialize the database:
+```bash
+flask db init          # First time only
+flask db migrate -m "Initial migration"
+flask db upgrade
+```
+
+The code includes an example `connect_db()` using `psycopg2-binary` for direct PostgreSQL connections. For ORM-based database operations, use Flask-SQLAlchemy models.
 
 Development Notes
 - Static assets are served from `static/`; use `url_for('static', filename='...')` in templates.

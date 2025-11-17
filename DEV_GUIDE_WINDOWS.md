@@ -33,27 +33,50 @@ Then re-run the activation command.
 4) Upgrade pip and install dependencies
 ```powershell
 python -m pip install -U pip
-pip install flask psycopg2-binary
+pip install -r requirements.txt
 ```
 
-5) Verify project structure
+This will install:
+- Flask (web framework)
+- Flask-SQLAlchemy (database ORM with SQLite support)
+- Flask-Migrate (database migrations)
+- Flask-WTF (form handling and CSRF protection)
+- Flask-Login (user session management)
+- bcrypt (password hashing)
+- psycopg2-binary (PostgreSQL support - optional)
+
+5) Initialize the database (first time setup)
+```powershell
+$env:FLASK_APP = "app.py"
+flask db init
+flask db migrate -m "Initial migration"
+flask db upgrade
+```
+
+This creates a SQLite database in `instance/app.db` with the necessary tables.
+
+6) Verify project structure
 You should have:
 - `app.py`
+- `requirements.txt`
+- `config.py` (database configuration)
+- `models.py` (database models)
 - `templates/index.html`
 - `static/css/main.css`
 - `static/assets/images/` (optional images)
+- `instance/app.db` (after database initialization)
 
-6) Run the development server
+7) Run the development server
 ```powershell
 $env:FLASK_APP = "app.py"
 flask run --debug
 ```
 You should see output indicating the server is running on `http://127.0.0.1:5000`.
 
-7) Open the app
+8) Open the app
 Open your browser to `http://127.0.0.1:5000`.
 
-8) Common tasks
+9) Common tasks
 - Change port:
   ```powershell
   flask run -p 5050
@@ -62,7 +85,7 @@ Open your browser to `http://127.0.0.1:5000`.
 - Add styles: edit `static/css/main.css`.
 - Add images: place them under `static/assets/images/` and reference with `{{ url_for('static', filename='assets/images/your.png') }}`.
 
-9) Git Workflow: Creating and Merging Branches
+10) Git Workflow: Creating and Merging Branches
 **Create a new branch for your feature:**
 ```powershell
 git switch -c feature/my-feature
@@ -100,13 +123,26 @@ git branch -d feature/my-feature
 git push origin --delete feature/my-feature
 ```
 
-10) Optional: Connect to PostgreSQL
-If you want to test DB connections, install PostgreSQL locally or use Docker, then update credentials in `connect_db()` inside `app.py`.
+11) Database Configuration
 
-11) Troubleshooting
+**SQLite (Default):**
+The application uses SQLite by default, which requires no additional setup. The database file is created in `instance/app.db` when you run migrations.
+
+**PostgreSQL (Optional):**
+To use PostgreSQL instead of SQLite:
+1. Install PostgreSQL locally or use Docker
+2. Update database credentials in `config.py`:
+   ```python
+   SQLALCHEMY_DATABASE_URI = 'postgresql://user:password@localhost/dbname'
+   ```
+3. Run migrations as usual - Flask-Migrate will use PostgreSQL instead of SQLite
+
+12) Troubleshooting
 - Virtual env activation fails: ensure the execution policy change above, or use CMD: `venv\Scripts\activate.bat`.
 - Flask not found: confirm the venv is active and `pip show flask` displays a version.
 - Port already in use: specify a different port with `-p`.
 - `psycopg2-binary` install issues: pin to `2.9.11` or install PostgreSQL client tools.
+- Database migration errors: ensure you've run `flask db init` before `flask db migrate`.
+- SQLite database locked: close any database viewers or ensure no other process is accessing `instance/app.db`.
 
 

@@ -169,13 +169,16 @@ flask run --debug
 To make this production-ready:
 
 1. **Database Setup**
-   - Create models for Vendors, Users, Orders
-   - Set up PostgreSQL connection (already configured in app.py)
+   - Create models for Vendors, Users, Orders using Flask-SQLAlchemy
+   - SQLite is configured by default (no setup required)
+   - Set up PostgreSQL connection (optional, update config.py)
+   - Use Flask-Migrate for database migrations (already in requirements.txt)
 
 2. **Authentication**
    - Implement real user registration
-   - Add session management
-   - Secure password hashing
+   - Add session management with Flask-Login (already in requirements.txt)
+   - Secure password hashing with bcrypt (already in requirements.txt)
+   - Form handling with Flask-WTF (already in requirements.txt)
 
 3. **File Upload**
    - Handle design file uploads
