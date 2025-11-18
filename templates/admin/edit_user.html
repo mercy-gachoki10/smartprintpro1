@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User — SmartPrint Pro{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell">
+  <div class="dashboard-card">
+    <h2>Edit {{ user_type|capitalize }} account</h2>
+    <p style="margin:4px 0 16px;color:var(--muted);font-size:14px;">
+      Update profile details or deactivate this account.
+    </p>
+
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="form-group">
+        {{ form.full_name.label }}
+        {{ form.full_name(class_="input-text") }}
+        {% for error in form.full_name.errors %}
+          <div class="form-errors">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form.phone.label }}
+        {{ form.phone(class_="input-text") }}
+        {% for error in form.phone.errors %}
+          <div class="form-errors">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form.organization.label }}
+        {{ form.organization(class_="input-text") }}
+        {% for error in form.organization.errors %}
+          <div class="form-errors">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <label class="checkbox-row">
+        {{ form.active() }} Active account
+      </label>
+
+      <div class="actions-row">
+        <a href="{{ url_for('admin_users') }}" class="btn-secondary">Cancel</a>
+        <button type="submit" class="btn-primary">{{ form.submit.label.text }}</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<style>
+  .dashboard-shell{max-width:700px;margin:60px auto;padding:0 20px}
+  .dashboard-card{background:#fff;padding:28px;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,0.06)}
+  .form-group{margin-bottom:16px}
+  .form-group label{display:block;font-weight:600;margin-bottom:6px;color:var(--purple)}
+  .form-group input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e8e6f2;font-size:14px}
+  .form-errors{color:#b91c1c;font-size:13px;margin-top:4px}
+  .checkbox-row{display:flex;align-items:center;gap:8px;margin:8px 0 20px;color:var(--muted);font-size:14px}
+  .actions-row{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}
+  .btn-primary{background:var(--purple);color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;border:none;font-weight:600;cursor:pointer}
+  .btn-secondary{background:#e5e7eb;color:#111827;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px}
+  .btn-primary:hover{background:#571590}
+</style>
+{% endblock %}
+
+

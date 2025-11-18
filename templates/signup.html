@@ -5,189 +5,113 @@
 {% block extra_css %}
 <style>
   .signup-container {
-    max-width: 500px;
+    max-width: 560px;
     margin: 60px auto;
     padding: 0 20px;
   }
-  
+
   .signup-card {
     background: #fff;
-    border-radius: 12px;
-    padding: 32px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+    border-radius: 16px;
+    padding: 36px;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.08);
   }
-  
+
   .account-type-selector {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
   }
-  
-  .account-type-btn {
-    padding: 12px;
+
+  .account-type-option {
     border: 2px solid #e8e6f2;
-    background: #fff;
-    border-radius: 8px;
+    border-radius: 12px;
+    padding: 18px;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     font-weight: 600;
-    font-size: 13px;
-    transition: all 0.2s;
     color: var(--muted);
-    min-height: 44px;
+    transition: border 0.2s, background 0.2s;
   }
-  
-  .account-type-btn:hover {
+
+  .account-type-option input {
+    display: none;
+  }
+
+  .account-type-option.active {
     border-color: var(--purple);
+    background: #faf5ff;
     color: var(--purple);
   }
-  
-  .account-type-btn.active {
-    background: var(--purple);
-    color: #fff;
-    border-color: var(--purple);
-  }
-  
+
   .form-group {
     margin-bottom: 18px;
   }
-  
+
   .form-group label {
     display: block;
     font-weight: 600;
     margin-bottom: 6px;
     color: var(--purple);
-    font-size: 14px;
   }
-  
-  .form-group input,
-  .form-group select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #e8e6f2;
-    border-radius: 8px;
-    font-size: 14px;
-    transition: border-color 0.2s;
-  }
-  
-  .form-group input:focus,
-  .form-group select:focus {
-    outline: none;
-    border-color: var(--purple);
-    box-shadow: 0 0 0 3px rgba(107, 33, 168, 0.1);
-  }
-  
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  
-  .form-row .form-group {
-    margin-bottom: 0;
-  }
-  
-  .btn-signup {
+
+  .form-group input {
     width: 100%;
     padding: 12px;
+    border: 1px solid #e8e6f2;
+    border-radius: 10px;
+    font-size: 15px;
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px rgba(107,33,168,0.15);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .form-errors {
+    color: #b91c1c;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+
+  .btn-signup {
+    width: 100%;
+    padding: 14px;
     background: var(--purple);
     color: #fff;
     border: none;
-    border-radius: 8px;
-    font-weight: 600;
+    border-radius: 10px;
+    font-weight: 700;
     font-size: 15px;
     cursor: pointer;
-    transition: background 0.2s;
-    min-height: 44px;
+    min-height: 48px;
   }
-  
+
   .btn-signup:hover {
     background: #571590;
   }
-  
-  .btn-signup:active {
-    transform: scale(0.98);
-  }
-  
-  .terms-agreement {
-    margin-bottom: 18px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-  
-  .terms-agreement input {
-    width: auto;
-    margin-right: 8px;
-  }
-  
-  .terms-agreement a {
-    color: var(--purple);
-    text-decoration: none;
-    font-weight: 600;
-  }
-  
-  .terms-agreement a:hover {
-    text-decoration: underline;
-  }
-  
+
   .login-link {
     text-align: center;
     margin-top: 20px;
     color: var(--muted);
     font-size: 14px;
   }
-  
+
   .login-link a {
     color: var(--purple);
-    text-decoration: none;
     font-weight: 600;
-  }
-  
-  .login-link a:hover {
-    text-decoration: underline;
-  }
-  
-  .account-type-description {
-    margin-top: 16px;
-    padding: 12px;
-    background: #faf8ff;
-    border-radius: 8px;
-    font-size: 12px;
-    color: var(--muted);
-    border-left: 4px solid var(--purple);
-  }
-  
-  @media(max-width:600px) {
-    .signup-container {
-      margin: 30px auto;
-    }
-    
-    .signup-card {
-      padding: 20px;
-    }
-    
-    .account-type-selector {
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
-    
-    .account-type-btn {
-      padding: 10px;
-      font-size: 12px;
-    }
-    
-    .form-row {
-      grid-template-columns: 1fr;
-      gap: 0;
-    }
-    
-    .form-row .form-group {
-      margin-bottom: 18px;
-    }
-    
-    .form-group input {
-      font-size: 16px;
-    }
+    text-decoration: none;
   }
 </style>
 {% endblock %}
@@ -195,144 +119,102 @@
 {% block content %}
   <div class="signup-container">
     <div class="signup-card">
-      
-      <!-- Account Type Selector -->
-      <h3 style="margin: 0 0 16px 0; color: var(--purple); text-align: center;">Select Account Type</h3>
-      <div class="account-type-selector">
-        <button class="account-type-btn active" onclick="selectAccountType('customer', this)">
-          👤 Customer
-        </button>
-        <button class="account-type-btn" onclick="selectAccountType('employee', this)">
-          👨‍💼 Employee
-        </button>
-        <button class="account-type-btn" onclick="selectAccountType('admin', this)">
-          ⚙️ Administrator
-        </button>
-      </div>
+      <h3 style="margin:0 0 8px;color:var(--purple);">Create your SmartPrint Pro account</h3>
+      <p style="margin:0 0 24px;color:var(--muted);font-size:14px;">Choose the account type that best describes how you use the platform.</p>
 
-      <!-- Signup Form -->
-      <h3 style="margin: 0 0 6px 0; color: var(--purple);">Create Your Account</h3>
-      <p style="color: var(--muted); font-size: 13px; margin: 0 0 24px 0;" id="accountTypeTitle">Join SmartPrint Pro as a customer</p>
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
 
-      <form onsubmit="handleSignup(event)">
+        <div class="account-type-selector" id="accountTypeSelector">
+          {% for value, label in form.user_type.choices %}
+            <label class="account-type-option {% if form.user_type.data == value %}active{% endif %}">
+              <input type="radio" name="{{ form.user_type.name }}" value="{{ value }}"
+                {% if form.user_type.data == value %}checked{% endif %}>
+              {{ label }}
+              <span style="font-size:13px;font-weight:400;">
+                {% if value == "customer" %}
+                  Manage print jobs, track quotes, and collaborate with shops.
+                {% else %}
+                  Access staff tools to fulfill orders and support customers.
+                {% endif %}
+              </span>
+            </label>
+          {% endfor %}
+        </div>
+        {% for error in form.user_type.errors %}
+          <div class="form-errors">{{ error }}</div>
+        {% endfor %}
+
         <div class="form-group">
-          <label for="fullname">Full Name</label>
-          <input type="text" id="fullname" placeholder="John Doe" required>
+          {{ form.full_name.label }}
+          {{ form.full_name(class_="input-text") }}
+          {% for error in form.full_name.errors %}
+            <div class="form-errors">{{ error }}</div>
+          {% endfor %}
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" placeholder="you@example.com" required>
+            {{ form.email.label }}
+            {{ form.email(class_="input-text") }}
+            {% for error in form.email.errors %}
+              <div class="form-errors">{{ error }}</div>
+            {% endfor %}
           </div>
           <div class="form-group">
-            <label for="phone">Phone Number</label>
-            <input type="tel" id="phone" placeholder="+254700000000" required>
+            {{ form.phone.label }}
+            {{ form.phone(class_="input-text") }}
+            {% for error in form.phone.errors %}
+              <div class="form-errors">{{ error }}</div>
+            {% endfor %}
           </div>
         </div>
 
         <div class="form-group">
-          <label for="organization">Organization/Company Name</label>
-          <input type="text" id="organization" placeholder="Your business name (optional)" id="org-input">
+          {{ form.organization.label }}
+          {{ form.organization(class_="input-text") }}
+          {% for error in form.organization.errors %}
+            <div class="form-errors">{{ error }}</div>
+          {% endfor %}
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" placeholder="Create a strong password" required>
+            {{ form.password.label }}
+            {{ form.password(class_="input-text") }}
+            {% for error in form.password.errors %}
+              <div class="form-errors">{{ error }}</div>
+            {% endfor %}
           </div>
           <div class="form-group">
-            <label for="confirm-password">Confirm Password</label>
-            <input type="password" id="confirm-password" placeholder="Confirm password" required>
+            {{ form.confirm_password.label }}
+            {{ form.confirm_password(class_="input-text") }}
+            {% for error in form.confirm_password.errors %}
+              <div class="form-errors">{{ error }}</div>
+            {% endfor %}
           </div>
         </div>
 
-        <div class="terms-agreement">
-          <input type="checkbox" id="terms" required>
-          <label for="terms">
-            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
-          </label>
-        </div>
-
-        <button type="submit" class="btn-signup">Create Account</button>
+        <button type="submit" class="btn-signup">{{ form.submit.label.text }}</button>
       </form>
 
       <div class="login-link">
-        Already have an account? <a href="/login">Login here</a>
+        Already have an account? <a href="{{ url_for('login') }}">Log in</a>
       </div>
-
-      <div class="account-type-description" id="accountTypeDesc">
-        <strong>👤 Customer Account:</strong> Browse vendors, upload designs, get quotes, track orders, and manage your print projects.
-      </div>
-
     </div>
   </div>
 
   {% block extra_js %}
   <script>
-    let selectedAccountType = 'customer';
+    const selector = document.getElementById('accountTypeSelector');
+    selector?.addEventListener('click', (event) => {
+      const option = event.target.closest('.account-type-option');
+      if (!option) return;
 
-    function selectAccountType(type, button) {
-      selectedAccountType = type;
-      
-      // Update active button
-      document.querySelectorAll('.account-type-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      button.classList.add('active');
-      
-      // Update descriptions based on account type
-      const descriptions = {
-        customer: {
-          title: 'Join SmartPrint Pro as a customer',
-          desc: '<strong>👤 Customer Account:</strong> Browse vendors, upload designs, get quotes, track orders, and manage your print projects.'
-        },
-        employee: {
-          title: 'Join SmartPrint Pro as an employee',
-          desc: '<strong>👨‍💼 Employee Account:</strong> Process customer orders, manage quotes, handle shipments, and support customers.'
-        },
-        admin: {
-          title: 'Create an administrator account',
-          desc: '<strong>⚙️ Administrator Account:</strong> Manage vendors, users, orders, system settings, and analytics. (Requires invitation code)'
-        }
-      };
-      
-      document.getElementById('accountTypeTitle').textContent = descriptions[type].title;
-      document.getElementById('accountTypeDesc').innerHTML = descriptions[type].desc;
-      
-      // Show additional field for admin accounts
-      const orgInput = document.getElementById('org-input');
-      if (type === 'admin') {
-        orgInput.placeholder = 'Admin code required - contact system administrator';
-        orgInput.required = true;
-      } else {
-        orgInput.placeholder = 'Your business name (optional)';
-        orgInput.required = false;
-      }
-    }
-
-    function handleSignup(event) {
-      event.preventDefault();
-      const fullname = document.getElementById('fullname').value;
-      const email = document.getElementById('email').value;
-      const phone = document.getElementById('phone').value;
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirm-password').value;
-      
-      // Validate passwords match
-      if (password !== confirmPassword) {
-        alert('Passwords do not match!');
-        return;
-      }
-      
-      // Validate password strength
-      if (password.length < 8) {
-        alert('Password must be at least 8 characters long');
-        return;
-      }
-      
-      alert(`Account creation (demo):\nName: ${fullname}\nEmail: ${email}\nPhone: ${phone}\nAccount Type: ${selectedAccountType.toUpperCase()}\n\nThis would create an account in a real app.`);
-    }
+      selector.querySelectorAll('.account-type-option').forEach(opt => opt.classList.remove('active'));
+      option.classList.add('active');
+      option.querySelector('input').checked = true;
+    });
   </script>
   {% endblock %}
 {% endblock %}

@@ -36,35 +36,37 @@ python -m pip install -U pip
 pip install -r requirements.txt
 ```
 
-This will install:
-- Flask (web framework)
-- Flask-SQLAlchemy (database ORM with SQLite support)
-- Flask-Migrate (database migrations)
-- Flask-WTF (form handling and CSRF protection)
-- Flask-Login (user session management)
-- bcrypt (password hashing)
-- psycopg2-binary (PostgreSQL support - optional)
+This installs Flask plus the extensions used for authentication (`Flask-WTF`, `Flask-Login`, `Flask-SQLAlchemy`, etc.).
 
 5) Initialize the database (first time setup)
+
+Tables are created automatically the first time you run `flask run`. Once the schema stabilizes you can also use Flask-Migrate:
 ```powershell
 $env:FLASK_APP = "app.py"
-flask db init
-flask db migrate -m "Initial migration"
+flask db init                # once
+flask db migrate -m "initial"
 flask db upgrade
 ```
 
-This creates a SQLite database in `instance/app.db` with the necessary tables.
-
 6) Verify project structure
-You should have:
-- `app.py`
-- `requirements.txt`
-- `config.py` (database configuration)
-- `models.py` (database models)
-- `templates/index.html`
+You should have (partial list):
+- `app.py` (application factory + routes)
+- `config.py` (SQLite/PostgreSQL config)
+- `extension.py` (db/migrate/login manager instances)
+- `models.py` (customer, staff, admin tables)
+- `forms.py` (registration + login forms)
+- `decorators.py` (role guard)
+- `templates/` (marketing pages + dashboards + auth pages)
 - `static/css/main.css`
-- `static/assets/images/` (optional images)
-- `instance/app.db` (after database initialization)
+- `instance/app.db` (created on first run)
+
+6.5) Prepare the database (recommended before `flask run`)
+```powershell
+$env:FLASK_APP = "app.py"
+flask db init          # only the first time
+flask db migrate -m "initial structure"
+flask db upgrade
+```
 
 7) Run the development server
 ```powershell
@@ -125,17 +127,29 @@ git push origin --delete feature/my-feature
 
 11) Database Configuration
 
-**SQLite (Default):**
-The application uses SQLite by default, which requires no additional setup. The database file is created in `instance/app.db` when you run migrations.
+**SQLite (Default)**
+- No setup needed. Data is stored in `instance/app.db`.
 
-**PostgreSQL (Optional):**
-To use PostgreSQL instead of SQLite:
-1. Install PostgreSQL locally or use Docker
-2. Update database credentials in `config.py`:
-   ```python
-   SQLALCHEMY_DATABASE_URI = 'postgresql://user:password@localhost/dbname'
+**PostgreSQL (Optional)**
+1. Install PostgreSQL locally or run a Docker container.
+2. Export `DATABASE_URL` before running Flask, e.g.
+   ```powershell
+   $env:DATABASE_URL = "postgresql://user:password@localhost:5432/smartprintpro"
    ```
-3. Run migrations as usual - Flask-Migrate will use PostgreSQL instead of SQLite
+3. Run `flask db upgrade` (or let `db.create_all()` run on launch) to create the tables.
+
+**Admin seeding**
+- The first `flask run` call seeds a default administrator (`admin@smartprintpro.com` / `Admin@123`) if one does not exist.
+- Override with environment variables:
+  ```powershell
+  $env:ADMIN_EMAIL = "you@example.com"
+  $env:ADMIN_PASSWORD = "StrongPass123"
+  ```
+
+**Authentication workflow**
+- `/signup`: create customer or staff accounts (admins are seeded, not self-registered).
+- `/login`: email/password only — the backend automatically figures out the user type.
+- `/dashboard`: redirects to the correct dashboard template based on the role.
 
 12) Troubleshooting
 - Virtual env activation fails: ensure the execution policy change above, or use CMD: `venv\Scripts\activate.bat`.

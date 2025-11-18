@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Dashboard — SmartPrint Pro{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell">
+  <div class="dashboard-card">
+    <h2>Welcome, {{ user.full_name }} 👋</h2>
+    <p>You are logged in as <strong>{{ user.user_type|capitalize }}</strong>.</p>
+    <p>Order management widgets will live here soon.</p>
+    <a href="{{ url_for('edit_account') }}" class="link-btn">Update your account →</a>
+  </div>
+</section>
+
+<style>
+  .dashboard-shell{max-width:900px;margin:60px auto;padding:0 20px}
+  .dashboard-card{background:#fff;padding:32px;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,0.08)}
+  .link-btn{display:inline-block;margin-top:16px;color:var(--purple);font-weight:600;text-decoration:none}
+  .link-btn:hover{text-decoration:underline}
+</style>
+{% endblock %}

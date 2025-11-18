@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Staff Account — SmartPrint Pro{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell">
+  <div class="dashboard-card">
+    <h2>Personal settings</h2>
+    <p style="margin:4px 0 20px;color:var(--muted);font-size:14px;">Update your staff profile and keep your password secure.</p>
+
+    <form method="post" class="account-form" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="form-group">
+        {{ form.full_name.label }}
+        {{ form.full_name(class_="input-text") }}
+        {% for error in form.full_name.errors %}
+          <div class="form-errors">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form.phone.label }}
+        {{ form.phone(class_="input-text") }}
+        {% for error in form.phone.errors %}
+          <div class="form-errors">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form.organization.label }}
+        {{ form.organization(class_="input-text", placeholder="Optional") }}
+        {% for error in form.organization.errors %}
+          <div class="form-errors">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="divider"></div>
+      <h4>Security</h4>
+      <p style="margin:0 0 14px;color:var(--muted);font-size:13px;">Choose a new password to keep your account protected.</p>
+
+      <div class="form-group">
+        {{ form.new_password.label }}
+        {{ form.new_password(class_="input-text") }}
+        {% for error in form.new_password.errors %}
+          <div class="form-errors">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form.confirm_password.label }}
+        {{ form.confirm_password(class_="input-text") }}
+        {% for error in form.confirm_password.errors %}
+          <div class="form-errors">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="btn-primary">{{ form.submit.label.text }}</button>
+    </form>
+  </div>
+</section>
+
+<style>
+  .dashboard-shell{max-width:640px;margin:60px auto;padding:0 20px}
+  .dashboard-card{background:#fff;padding:32px;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,0.08)}
+  .account-form .form-group{margin-bottom:18px}
+  .form-group label{display:block;font-weight:600;margin-bottom:6px;color:var(--purple);font-size:14px}
+  .form-group input{width:100%;padding:12px;border:1px solid #e8e6f2;border-radius:10px;font-size:15px}
+  .form-group input:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(107,33,168,0.15)}
+  .form-errors{color:#b91c1c;font-size:13px;margin-top:6px}
+  .btn-primary{width:100%;padding:14px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;margin-top:6px}
+  .btn-primary:hover{background:#571590}
+  .divider{height:1px;background:#eee;margin:20px 0}
+  h4{margin:0;color:var(--purple)}
+</style>
+{% endblock %}
+

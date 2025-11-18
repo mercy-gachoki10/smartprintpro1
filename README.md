@@ -1,32 +1,44 @@
 SmartPrint Pro
+==============
 
 Overview
-SmartPrint Pro is a minimal Flask web app that showcases a landing page for discovering local print shops. It uses Flask for routing, Jinja2 templates for HTML, and static assets (CSS/Images) served by Flask.
+--------
+SmartPrint Pro is a multi-role Flask web app that showcases a marketing site for local print shops **and** provides authenticated dashboards for customers, staff, and administrators. It uses Flask blueprints, Jinja2 templates, and Flask-WTF forms backed by SQLAlchemy models.
 
 Key Features
-- Landing page with search/filter for demo vendor cards
-- Modal contact form (demo)
-- Responsive layout with externalized CSS in `static/css/main.css`
+------------
+- Marketing pages (`/`, `/vendors`, `/features`, `/how-it-works`)
+- Email/password authentication with hashed credentials
+- Separate tables for customers, staff, and admins with role-aware dashboards
+- Dynamic header/footer that react to the current session (welcome message + logout)
+- Flash messaging for sign-up/sign-in feedback
+- Responsive layout (see `static/css/main.css`)
 
 Tech Stack
-- Python 3.11+ (recommended)
-- Flask 3.x
-- Flask-SQLAlchemy (database ORM with SQLite support)
-- Flask-Migrate (database migrations)
-- Flask-WTF (form handling and CSRF protection)
-- Flask-Login (user session management)
-- bcrypt (password hashing)
-- Jinja2 (templating)
-- psycopg2-binary (PostgreSQL support - optional)
+----------
+- Python 3.11+
+- Flask 3.x + Jinja2
+- Flask-SQLAlchemy & Flask-Migrate
+- Flask-WTF for CSRF-protected forms
+- Flask-Login for session management
+- Werkzeug password hashing (bcrypt-strength)
+- psycopg2-binary (optional PostgreSQL driver)
 
 Repository Layout
-- `app.py` – Flask app entrypoint and route definitions
-- `templates/index.html` – Main page template
-- `static/css/main.css` – Stylesheet for the landing page
-- `static/assets/images/` – Images (e.g., logo)
+-----------------
+- `app.py` – application factory, route registration, and seeding logic
+- `config.py` – environment-aware configuration (SQLite by default, PostgreSQL via `DATABASE_URL`)
+- `extension.py` – extension instances (db, migrate, login manager)
+- `models.py` – user tables (`customers`, `staff_members`, `admins`)
+- `forms.py` – WTForms definitions for registration and login
+- `decorators.py` – role guard helpers
+- `templates/` – Jinja templates (marketing pages + dashboards + auth views)
+- `static/css/main.css` – global stylesheet
+- `instance/app.db` – SQLite database (auto-created)
 
 Quick Start (Windows, macOS, Linux)
-1) Create and activate a virtual environment
+-----------------------------------
+1. **Create & activate a virtual environment**
    - Windows (PowerShell):
      ```powershell
      python -m venv venv
@@ -37,49 +49,71 @@ Quick Start (Windows, macOS, Linux)
      python3 -m venv venv
      source venv/bin/activate
      ```
-2) Install dependencies
+2. **Install dependencies**
    ```bash
    pip install -U pip
    pip install -r requirements.txt
    ```
-   
-   Or install manually:
+3. **Run the app**
    ```bash
-   pip install Flask Flask-SQLAlchemy Flask-Migrate Flask-WTF Flask-Login bcrypt psycopg2-binary
-   ```
-3) Run the app
-   ```bash
-   set FLASK_APP=app.py   # PowerShell: $env:FLASK_APP = "app.py"
+   # PowerShell
+   $env:FLASK_APP = "app.py"
    flask run --debug
    ```
    Visit http://127.0.0.1:5000
 
-Database
-The application supports both SQLite (default) and PostgreSQL:
+Authentication Workflow
+-----------------------
+1. **Sign up** as a customer or staff member at `/signup`. Successful submissions flash a success message and redirect to `/login`.
+2. **Log in** at `/login`. The backend automatically discovers the correct table, verifies the hashed password, and stores the session with Flask-Login.
+3. **Dashboards**:
+   - Customers → `templates/user/userdash.html`
+   - Staff → `templates/staff/staffdash.html`
+   - Admins → `templates/admin/admindash.html`
+   Each page currently displays a welcome message and role badge (functionality to be expanded later).
+4. **Logout** from the header link, which clears the session and returns the user to `/login`.
 
-- **SQLite**: Default database, stored in `instance/app.db`. No additional setup required - works out of the box.
-- **PostgreSQL**: Optional production database. Update database credentials in `config.py` to use PostgreSQL instead of SQLite.
+Default Admin Credentials
+-------------------------
+The first `flask run` automatically seeds an administrator (if missing):
+- Email: `admin@smartprintpro.com`
+- Password: `Admin@123`
 
-To initialize the database:
-```bash
-flask db init          # First time only
-flask db migrate -m "Initial migration"
-flask db upgrade
+Override any of these via environment variables before launching:
+
+```powershell
+$env:ADMIN_EMAIL = "you@example.com"
+$env:ADMIN_PASSWORD = "StrongPass123"
+$env:ADMIN_NAME = "Jane Admin"
 ```
 
-The code includes an example `connect_db()` using `psycopg2-binary` for direct PostgreSQL connections. For ORM-based database operations, use Flask-SQLAlchemy models.
+Database & Configuration
+------------------------
+- **SQLite**: default storage, lives at `instance/app.db`.
+- **PostgreSQL**: set `DATABASE_URL` before running Flask, e.g.
+  ```
+  postgresql://user:pass@localhost:5432/smartprintpro
+  ```
+- Migrations (optional, but recommended once schemas stabilize):
+  ```bash
+  flask db init          # once
+  flask db migrate -m "initial"
+  flask db upgrade
+  ```
 
 Development Notes
-- Static assets are served from `static/`; use `url_for('static', filename='...')` in templates.
-- Styles are centralized in `static/css/main.css`.
-- For additional pages, create templates in `templates/` and routes in `app.py`.
+-----------------
+- Static assets live under `static/`; reference them with `url_for('static', filename='css/main.css')`.
+- To add new pages, create templates and register new routes inside `register_routes()` in `app.py`.
+- `decorators.py` exposes `@roles_required(...)` for role-scoped views beyond the shared `/dashboard`.
 
 Troubleshooting
-- Port in use: change port with `flask run -p 5050`.
-- Virtual environment not activating on Windows: run PowerShell as Administrator and `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once.
-- If `psycopg2-binary` fails on your platform, use `pip install psycopg2-binary==2.9.11` or install PostgreSQL client libraries and use `psycopg2`.
+---------------
+- Port in use → `flask run -p 5050`.
+- Virtualenv fails to activate on Windows → run PowerShell as admin and `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+- PostgreSQL driver issues → pin `psycopg2-binary==2.9.11` or install native libraries.
+- Admin seeding not running → ensure `flask run` executes with a writeable `instance/` folder.
 
 License
+-------
 MIT
-
-
