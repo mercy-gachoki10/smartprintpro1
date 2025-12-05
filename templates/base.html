@@ -46,9 +46,15 @@
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      <div class="flash-container">
+      <div class="flash-container" style="max-width:1200px;margin:0 auto;padding:10px 20px">
         {% for category, message in messages %}
-          <div class="flash-message flash-{{ category }}">{{ message }}</div>
+          <div class="flash-message flash-{{ category }}" style="padding:12px 20px;margin:8px 0;border-radius:8px;font-weight:500;
+            {% if category == 'error' %}background:#fee;color:#c00;border-left:4px solid #c00;
+            {% elif category == 'success' %}background:#efe;color:#060;border-left:4px solid #060;
+            {% elif category == 'warning' %}background:#ffc;color:#840;border-left:4px solid #f90;
+            {% else %}background:#eef;color:#006;border-left:4px solid #069;{% endif %}">
+            {{ message }}
+          </div>
         {% endfor %}
       </div>
     {% endif %}

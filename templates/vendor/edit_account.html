@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Staff Account — SmartPrint Pro{% endblock %}
+{% block title %}Edit Vendor Account — SmartPrint Pro{% endblock %}
 
 {% block content %}
 <section class="dashboard-shell">
   <div class="dashboard-card">
-    <h2>Personal settings</h2>
-    <p style="margin:4px 0 20px;color:var(--muted);font-size:14px;">Update your staff profile and keep your password secure.</p>
+    <h2>Business settings</h2>
+    <p style="margin:4px 0 20px;color:var(--muted);font-size:14px;">Update your vendor profile and business information.</p>
 
     <form method="post" class="account-form" novalidate>
       {{ form.hidden_tag() }}
 
       <div class="form-group">
-        {{ form.full_name.label }}
+        {{ form.full_name.label(text="Business Name") }}
         {{ form.full_name(class_="input-text") }}
         {% for error in form.full_name.errors %}
           <div class="form-errors">{{ error }}</div>
@@ -28,8 +28,8 @@
       </div>
 
       <div class="form-group">
-        {{ form.organization.label }}
-        {{ form.organization(class_="input-text", placeholder="Optional") }}
+        {{ form.organization.label(text="Business Address") }}
+        {{ form.organization(class_="input-text", placeholder="Shop location") }}
         {% for error in form.organization.errors %}
           <div class="form-errors">{{ error }}</div>
         {% endfor %}

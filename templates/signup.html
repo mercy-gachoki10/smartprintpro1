@@ -113,6 +113,41 @@
     font-weight: 600;
     text-decoration: none;
   }
+
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid #e8e6f2;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 400;
+    font-size: 14px;
+  }
+
+  .checkbox-label:hover {
+    border-color: var(--purple);
+    background: #faf5ff;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+    cursor: pointer;
+  }
+
+  .checkbox-label input[type="checkbox"]:checked + span {
+    font-weight: 600;
+    color: var(--purple);
+  }
 </style>
 {% endblock %}
 
@@ -135,7 +170,7 @@
                 {% if value == "customer" %}
                   Manage print jobs, track quotes, and collaborate with shops.
                 {% else %}
-                  Access staff tools to fulfill orders and support customers.
+                  Run your print business, receive orders, and manage services.
                 {% endif %}
               </span>
             </label>
@@ -145,12 +180,14 @@
           <div class="form-errors">{{ error }}</div>
         {% endfor %}
 
-        <div class="form-group">
-          {{ form.full_name.label }}
-          {{ form.full_name(class_="input-text") }}
-          {% for error in form.full_name.errors %}
-            <div class="form-errors">{{ error }}</div>
-          {% endfor %}
+        <div id="customerFields">
+          <div class="form-group">
+            {{ form.full_name.label }} <span style="color: #b91c1c;">*</span>
+            {{ form.full_name(class_="input-text") }}
+            {% for error in form.full_name.errors %}
+              <div class="form-errors">{{ error }}</div>
+            {% endfor %}
+          </div>
         </div>
 
         <div class="form-row">
@@ -170,12 +207,63 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div id="customerOrganization" class="form-group">
           {{ form.organization.label }}
           {{ form.organization(class_="input-text") }}
           {% for error in form.organization.errors %}
             <div class="form-errors">{{ error }}</div>
           {% endfor %}
+        </div>
+
+        <div id="vendorFields" style="display: none;">
+          <div class="form-group">
+            {{ form.business_name.label }} <span style="color: #b91c1c;">*</span>
+            {{ form.business_name(class_="input-text", placeholder="Your print shop name", required=true) }}
+            {% for error in form.business_name.errors %}
+              <div class="form-errors">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="form-group">
+            {{ form.business_address.label }}
+            {{ form.business_address(class_="input-text", placeholder="Shop location") }}
+            {% for error in form.business_address.errors %}
+              <div class="form-errors">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              {{ form.business_type.label }}
+              {{ form.business_type(class_="input-text") }}
+              {% for error in form.business_type.errors %}
+                <div class="form-errors">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="form-group">
+              {{ form.tax_id.label }}
+              {{ form.tax_id(class_="input-text", placeholder="Optional") }}
+              {% for error in form.tax_id.errors %}
+                <div class="form-errors">{{ error }}</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="form-group">
+            {{ form.services_offered.label }}
+            <div class="checkbox-grid">
+              {% for value, label in form.services_offered.choices %}
+                <label class="checkbox-label">
+                  <input type="checkbox" name="{{ form.services_offered.name }}" value="{{ value }}"
+                    {% if form.services_offered.data and value in form.services_offered.data %}checked{% endif %}>
+                  <span>{{ label }}</span>
+                </label>
+              {% endfor %}
+            </div>
+            {% for error in form.services_offered.errors %}
+              <div class="form-errors">{{ error }}</div>
+            {% endfor %}
+          </div>
         </div>
 
         <div class="form-row">
@@ -207,14 +295,46 @@
   {% block extra_js %}
   <script>
     const selector = document.getElementById('accountTypeSelector');
-    selector?.addEventListener('click', (event) => {
+    const vendorFields = document.getElementById('vendorFields');
+    const customerFields = document.getElementById('customerFields');
+    const customerOrganization = document.getElementById('customerOrganization');
+    
+    function updateFieldsVisibility() {
+      const selectedType = document.querySelector('input[name="user_type"]:checked');
+      if (selectedType && selectedType.value === 'vendor') {
+        vendorFields.style.display = 'block';
+        customerFields.style.display = 'none';
+        customerOrganization.style.display = 'none';
+        // Make vendor fields required
+        document.querySelector('#vendorFields input[name="business_name"]').required = true;
+        // Make customer fields not required
+        document.querySelector('#customerFields input[name="full_name"]').required = false;
+      } else {
+        vendorFields.style.display = 'none';
+        customerFields.style.display = 'block';
+        customerOrganization.style.display = 'block';
+        // Make customer fields required
+        document.querySelector('#customerFields input[name="full_name"]').required = true;
+        // Make vendor fields not required
+        document.querySelector('#vendorFields input[name="business_name"]').required = false;
+      }
+    }
+    
+    selector && selector.addEventListener('click', function(event) {
       const option = event.target.closest('.account-type-option');
       if (!option) return;
 
-      selector.querySelectorAll('.account-type-option').forEach(opt => opt.classList.remove('active'));
+      selector.querySelectorAll('.account-type-option').forEach(function(opt) {
+        opt.classList.remove('active');
+      });
       option.classList.add('active');
       option.querySelector('input').checked = true;
+      
+      updateFieldsVisibility();
     });
+    
+    // Initialize on page load
+    updateFieldsVisibility();
   </script>
   {% endblock %}
 {% endblock %}

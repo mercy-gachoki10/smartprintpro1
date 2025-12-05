@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Order {{ order.order_number }} — SmartPrint Pro{% endblock %}
+
+{% block content %}
+<section class="manage-order-container">
+  <div class="order-header-section">
+    <h1>{% if order.quote_count > 0 %}Revise{% else %}Create{% endif %} Quote for Order {{ order.order_number }}</h1>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
+  </div>
+
+  <!-- Quote History -->
+  {% if order.quotes %}
+  <div class="card">
+    <h2>Quote History</h2>
+    {% for quote in order.quotes %}
+    <div class="quote-history-item">
+      <div class="quote-header">
+        <strong>Quote #{{ quote.quote_number }}</strong>
+        <span class="badge badge-{{ quote.status }}">{{ quote.status|capitalize }}</span>
+        <span class="quote-date">{{ quote.sent_by_vendor_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+      </div>
+      <div class="quote-body">
+        <p><strong>Total:</strong> KSh {{ "{:,.2f}".format(quote.total_amount) }}</p>
+        {% if quote.vendor_message %}
+        <p><strong>Your Message:</strong> {{ quote.vendor_message }}</p>
+        {% endif %}
+        {% if quote.customer_response %}
+        <div class="customer-feedback">
+          <strong>Customer Feedback:</strong>
+          <p>{{ quote.customer_response }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Quote Form -->
+  <div class="card">
+    <h2>{% if order.quote_count > 0 %}Revised{% else %}New{% endif %} Quote Details</h2>
+    <form method="POST" action="{{ url_for('vendor_submit_quote', order_id=order.id) }}">
+      {{ form.hidden_tag() }}
+      
+      <!-- Base Fee -->
+      <div class="form-group">
+        <label for="base_fee">Base Fee (KSh)</label>
+        <input type="number" step="0.01" id="base_fee" name="base_fee" 
+               value="{{ order.base_fee }}" required class="input-text">
+        <small class="help-text">Standard base processing fee</small>
+      </div>
+
+      <!-- Order Items Pricing -->
+      <h3>Item Pricing</h3>
+      <div class="items-pricing">
+        {% for item in order.order_items %}
+        <div class="item-pricing-card">
+          <div class="item-header">
+            <h4>{{ item.service_category }} - {{ item.service_type }}</h4>
+            <span>Qty: {{ item.quantity }}</span>
+          </div>
+          
+          {% if item.specifications %}
+          <p class="item-specs"><strong>Specs:</strong> {{ item.specifications }}</p>
+          {% endif %}
+          
+          {% if item.file_name %}
+          <p class="item-specs"><strong>File:</strong> {{ item.file_name }}</p>
+          {% endif %}
+          
+          <div class="pricing-inputs">
+            <div class="form-group">
+              <label for="item_{{ item.id }}_price">Unit Price (KSh)</label>
+              <input type="number" step="0.01" id="item_{{ item.id }}_price" 
+                     name="item_{{ item.id }}_price" value="{{ item.unit_price }}" 
+                     required class="input-text"
+                     onchange="updateItemTotal({{ item.id }}, {{ item.quantity }})">
+              <small class="help-text">Current: KSh {{ "{:,.2f}".format(item.unit_price) }}</small>
+            </div>
+            
+            <div class="form-group">
+              <label>Item Total</label>
+              <div class="total-display" id="total_{{ item.id }}">
+                KSh {{ "{:,.2f}".format(item.total_price) }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="item_{{ item.id }}_notes">Price Adjustment Notes (Optional)</label>
+            <textarea id="item_{{ item.id }}_notes" name="item_{{ item.id }}_notes" 
+                      class="input-text" rows="2" 
+                      placeholder="Explain any significant price changes..."></textarea>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Vendor Message -->
+      <div class="form-group">
+        <label for="vendor_message">Message to Customer</label>
+        <textarea id="vendor_message" name="vendor_message" class="input-text" rows="4" 
+                  placeholder="Explain your pricing, delivery timeline, or any special considerations..."></textarea>
+        <small class="help-text">This message will be sent to the customer with your quote</small>
+      </div>
+
+      <!-- Quote Summary -->
+      <div class="quote-summary">
+        <h3>Quote Summary</h3>
+        <div class="summary-row">
+          <span>Base Fee:</span>
+          <span id="summary-base-fee">KSh {{ "{:,.2f}".format(order.base_fee) }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Items Subtotal:</span>
+          <span id="summary-subtotal">KSh {{ "{:,.2f}".format(order.subtotal) }}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total Quote:</span>
+          <span id="summary-total">KSh {{ "{:,.2f}".format(order.total_amount) }}</span>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="form-actions">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          {% if order.quote_count > 0 %}Send Revised Quote{% else %}Send Quote{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<style>
+  .manage-order-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  
+  .order-header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+  
+  .order-header-section h1 {
+    margin: 0;
+    font-size: 24px;
+  }
+  
+  .card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .card h2 {
+    font-size: 20px;
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+  
+  .card h3 {
+    font-size: 18px;
+    margin: 24px 0 16px 0;
+  }
+  
+  .quote-history-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .quote-history-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .quote-header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  
+  .quote-date {
+    color: #999;
+    font-size: 13px;
+    margin-left: auto;
+  }
+  
+  .quote-body {
+    background: #f9f9f9;
+    padding: 12px;
+    border-radius: 6px;
+  }
+  
+  .quote-body p {
+    margin: 8px 0;
+  }
+  
+  .customer-feedback {
+    background: #fff3e0;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 12px;
+  }
+  
+  .customer-feedback p {
+    margin: 8px 0 0 0;
+    font-style: italic;
+  }
+  
+  .badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .badge-pending {
+    background: #fff3e0;
+    color: #f57c00;
+  }
+  
+  .badge-accepted {
+    background: #e8f5e9;
+    color: #388e3c;
+  }
+  
+  .badge-rejected {
+    background: #ffebee;
+    color: #c62828;
+  }
+  
+  .badge-revised {
+    background: #e3f2fd;
+    color: #1976d2;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .input-text {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  
+  .input-text:focus {
+    outline: none;
+    border-color: var(--purple);
+  }
+  
+  .help-text {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #999;
+  }
+  
+  .items-pricing {
+    margin: 16px 0;
+  }
+  
+  .item-pricing-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: #fafafa;
+  }
+  
+  .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  
+  .item-header h4 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--purple);
+  }
+  
+  .item-specs {
+    margin: 8px 0;
+    font-size: 13px;
+    color: #666;
+  }
+  
+  .pricing-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  
+  .total-display {
+    padding: 10px 12px;
+    background: white;
+    border: 2px solid var(--purple);
+    border-radius: 6px;
+    font-weight: 600;
+    color: var(--purple);
+    margin-top: 29px;
+  }
+  
+  .quote-summary {
+    background: #f0f7ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 24px 0;
+  }
+  
+  .quote-summary h3 {
+    margin: 0 0 16px 0;
+  }
+  
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .summary-row.total {
+    border-bottom: none;
+    border-top: 2px solid #333;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--purple);
+    margin-top: 8px;
+    padding-top: 12px;
+  }
+  
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+  
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .btn-primary {
+    background: var(--purple);
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background: var(--dark-purple);
+  }
+  
+  .btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+  }
+  
+  .btn-secondary:hover {
+    background: #e0e0e0;
+  }
+  
+  @media (max-width: 768px) {
+    .order-header-section {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    
+    .pricing-inputs {
+      grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+      flex-direction: column-reverse;
+    }
+    
+    .btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  function updateItemTotal(itemId, quantity) {
+    const priceInput = document.getElementById(`item_${itemId}_price`);
+    const totalDisplay = document.getElementById(`total_${itemId}`);
+    
+    const unitPrice = parseFloat(priceInput.value) || 0;
+    const total = unitPrice * quantity;
+    
+    totalDisplay.textContent = `KSh ${total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+    
+    updateSummary();
+  }
+  
+  function updateSummary() {
+    const baseFee = parseFloat(document.getElementById('base_fee').value) || 0;
+    let subtotal = 0;
+    
+    // Calculate subtotal from all items
+    document.querySelectorAll('[id^="item_"][id$="_price"]').forEach(input => {
+      const itemId = input.id.match(/item_(\d+)_price/)[1];
+      const quantity = parseInt(input.closest('.item-pricing-card').querySelector('.item-header span').textContent.replace('Qty: ', ''));
+      const unitPrice = parseFloat(input.value) || 0;
+      subtotal += unitPrice * quantity;
+    });
+    
+    const total = baseFee + subtotal;
+    
+    document.getElementById('summary-base-fee').textContent = `KSh ${baseFee.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+    document.getElementById('summary-subtotal').textContent = `KSh ${subtotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+    document.getElementById('summary-total').textContent = `KSh ${total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+  }
+  
+  // Update summary when base fee changes
+  document.getElementById('base_fee').addEventListener('input', updateSummary);
+</script>
+{% endblock %}

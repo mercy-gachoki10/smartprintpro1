@@ -9,12 +9,12 @@
       <div>
         <h2>User management</h2>
         <p style="margin:4px 0 0;color:var(--muted);font-size:14px;">
-          Manage customers, staff, and admins. Edit details or deactivate accounts.
+          Manage customers, vendors, and admins. Edit details or deactivate accounts.
         </p>
       </div>
       <div class="summary">
         <div class="pill">Customers: {{ user_counts.customers }}</div>
-        <div class="pill">Staff: {{ user_counts.staff }}</div>
+        <div class="pill">Vendors: {{ user_counts.vendors }}</div>
         <div class="pill">Admins: {{ user_counts.admins }}</div>
         <a href="{{ url_for('admin_password_requests') }}" class="link-btn" style="margin-left:auto;">Manage password resets →</a>
       </div>
@@ -58,23 +58,25 @@
       </div>
 
       <div class="table-card">
-        <h3>Staff</h3>
+        <h3>Vendors</h3>
         <table>
           <thead>
             <tr>
               <th>Name</th>
               <th>Email</th>
               <th>Phone</th>
+              <th>Business</th>
               <th>Status</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {% for u in staff_members %}
+            {% for u in vendors %}
               <tr>
                 <td>{{ u.full_name }}</td>
                 <td>{{ u.email }}</td>
                 <td>{{ u.phone }}</td>
+                <td>{{ u.business_name or 'N/A' }}</td>
                 <td>
                   {% if u.active %}
                     <span class="status-badge status-active">Active</span>
@@ -83,11 +85,11 @@
                   {% endif %}
                 </td>
                 <td>
-                  <a href="{{ url_for('admin_edit_user', user_type='staff', user_id=u.id) }}" class="link-btn">Edit</a>
+                  <a href="{{ url_for('admin_edit_user', user_type='vendor', user_id=u.id) }}" class="link-btn">Edit</a>
                 </td>
               </tr>
             {% else %}
-              <tr><td colspan="5" class="empty-cell">No staff members yet.</td></tr>
+              <tr><td colspan="6" class="empty-cell">No vendors yet.</td></tr>
             {% endfor %}
           </tbody>
         </table>

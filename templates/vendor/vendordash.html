@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+
+{% block title %}Vendor Dashboard — SmartPrint Pro{% endblock %}
+
+{% block content %}
+<section class="vendor-dashboard">
+  <div class="dashboard-header">
+    <div>
+      <h1>Welcome, {{ user.business_name or user.full_name }}!</h1>
+      <p class="subtitle">Manage your print orders and quotes</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.available }}</div>
+        <div class="stat-label">Available Orders</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.in_progress }}</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ stats.completed_this_month }}</div>
+        <div class="stat-label">This Month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ "%.1f"|format(stats.average_rating) if stats.average_rating else 'N/A' }}</div>
+        <div class="stat-label">Avg Rating</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="available">Available Orders ({{ stats.available }})</button>
+    <button class="tab-btn" data-tab="myquotes">My Quotes ({{ stats.my_quotes }})</button>
+    <button class="tab-btn" data-tab="assigned">Assigned to Me ({{ stats.assigned }})</button>
+    <button class="tab-btn" data-tab="completed">Completed</button>
+  </div>
+
+  <!-- Available Orders Tab -->
+  <div class="tab-content active" id="available">
+    <div class="section-header">
+      <h2>Available Orders</h2>
+      <p>New orders matching your services - submit your quote before deadline!</p>
+    </div>
+    
+    {% if available_orders %}
+      <div class="orders-grid">
+        {% for order in available_orders %}
+        <div class="order-card">
+          <div class="order-header">
+            <div>
+              <h3>{{ order.order_number }}</h3>
+              <span class="order-date">{{ order.created_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+            </div>
+            <span class="badge badge-pending">New</span>
+          </div>
+          
+          <div class="order-info">
+            <p><strong>Customer:</strong> {{ order.customer.full_name }}</p>
+            <p><strong>Items:</strong> {{ order.order_items|length }} item(s)</p>
+            <p><strong>Est. Total:</strong> KSh {{ "{:,.2f}".format(order.total_amount) }}</p>
+            
+            {% if order.quote_deadline %}
+            <div style="margin-top: 12px; padding: 8px; background: {% if order.is_quote_deadline_passed %}#f8d7da{% elif order.time_remaining_for_quotes in ['Closed'] %}#f8d7da{% else %}#fff3cd{% endif %}; border-radius: 6px; font-size: 13px;">
+              <strong>⏱️ Quote Deadline:</strong> 
+              {% if order.is_quote_deadline_passed %}
+                <span style="color: #842029;">Closed</span>
+              {% else %}
+                <span style="color: #856404;">{{ order.time_remaining_for_quotes }} remaining</span>
+              {% endif %}
+            </div>
+            {% endif %}
+            
+            {% if order.customer_notes %}
+            <div class="notes-preview">
+              <strong>Notes:</strong> {{ order.customer_notes[:100] }}{% if order.customer_notes|length > 100 %}...{% endif %}
+            </div>
+            {% endif %}
+          </div>
+          
+          <div class="order-items-preview">
+            <strong>Service:</strong> {{ order.service_category }}
+            <ul>
+              {% for item in order.order_items[:3] %}
+              <li>{{ item.service_type }} (Qty: {{ item.quantity }})</li>
+              {% endfor %}
+            </ul>
+          </div>
+          
+          <div class="order-actions">
+            <a href="{{ url_for('vendor_view_order', order_id=order.id) }}" class="btn btn-secondary">View Details</a>
+            {% if order.quotes_open %}
+            <a href="{{ url_for('vendor_submit_quote', order_id=order.id) }}" class="btn btn-primary">Submit Quote</a>
+            {% else %}
+            <button class="btn btn-secondary" disabled>Quotes Closed</button>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>No available orders matching your services. Check back later!</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- My Quotes Tab -->
+  <div class="tab-content" id="myquotes">
+    <div class="section-header">
+      <h2>My Submitted Quotes</h2>
+      <p>Orders where you've submitted quotes awaiting customer decision</p>
+    </div>
+    
+    {% if my_quoted_orders %}
+      <div class="orders-grid">
+        {% for order in my_quoted_orders %}
+        <div class="order-card">
+          <div class="order-header">
+            <span class="order-number">{{ order.order_number }}</span>
+            <span class="status-badge status-{{ order.status }}">{{ order.status.replace('_', ' ').title() }}</span>
+          </div>
+          
+          <div class="order-info">
+            <p><strong>Customer:</strong> {{ order.customer.full_name }}</p>
+            <p><strong>Service:</strong> {{ order.service_category }}</p>
+            <p><strong>Submitted:</strong> {{ order.created_at.strftime('%b %d, %Y') }}</p>
+            
+            {% set my_quotes_count = order.quotes|selectattr('vendor_id', 'equalto', current_user.id)|list|length %}
+            <p><strong>My Quotes:</strong> {{ my_quotes_count }} submitted</p>
+            <p><strong>Total Quotes:</strong> {{ order.quote_count }} from all vendors</p>
+          </div>
+          
+          <div class="order-actions">
+            <a href="{{ url_for('vendor_view_order', order_id=order.id) }}" class="btn btn-secondary">View Details</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>You haven't submitted any quotes yet.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Assigned Orders Tab -->
+  <div class="tab-content" id="assigned">
+    <div class="section-header">
+      <h2>Assigned to Me</h2>
+      <p>Orders where customer accepted your quote</p>
+    </div>
+    
+    {% if assigned_orders %}
+      <div class="orders-grid">
+        {% for order in assigned_orders %}
+        <div class="order-card">
+          <div class="order-header">
+            <div>
+              <h3>{{ order.order_number }}</h3>
+              <span class="order-date">Accepted {{ order.accepted_at.strftime('%b %d, %I:%M %p') if order.accepted_at else order.vendor_assigned_at.strftime('%b %d, %I:%M %p') }}</span>
+            </div>
+            <span class="badge badge-{{ order.status }}">{{ order.status|replace('_', ' ')|title }}</span>
+          </div>
+          
+          <div class="order-info">
+            <p><strong>Customer:</strong> {{ order.customer.full_name }}</p>
+            <p><strong>Service:</strong> {{ order.service_category }}</p>
+            <p><strong>Total:</strong> KSh {{ "{:,.2f}".format(order.total_amount) }}</p>
+            <p><strong>Status:</strong> {{ order.status|replace('_', ' ')|title }}</p>
+          </div>
+          
+          <div class="order-actions">
+            <a href="{{ url_for('vendor_view_order', order_id=order.id) }}" class="btn btn-primary">View & Process Order</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>No assigned orders yet. Submit quotes for available orders!</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Completed Tab -->
+  <div class="tab-content" id="completed">
+    <div class="section-header">
+      <h2>Completed Orders</h2>
+      <p>Your order history and reviews</p>
+    </div>
+    
+    {% if completed_orders %}
+      <div class="orders-grid">
+        {% for order in completed_orders %}
+        <div class="order-card">
+          <div class="order-header">
+            <div>
+              <h3>{{ order.order_number }}</h3>
+              <span class="order-date">Completed {{ order.completed_at.strftime('%b %d, %Y') }}</span>
+            </div>
+            <span class="badge badge-completed">Completed</span>
+          </div>
+          
+          <div class="order-info">
+            <p><strong>Customer:</strong> {{ order.customer.full_name }}</p>
+            <p><strong>Total:</strong> KSh {{ "{:,.2f}".format(order.total_amount) }}</p>
+            <p><strong>Payment:</strong> {{ order.payment_status|title }}</p>
+            
+            {% if order.review %}
+            <div class="review-display">
+              <strong>Rating:</strong> 
+              <span class="stars">
+                {% for i in range(1, 6) %}
+                  <span class="star {% if i <= order.review.rating %}filled{% endif %}">★</span>
+                {% endfor %}
+              </span>
+              {% if order.review.comment %}
+              <p class="review-comment">"{{ order.review.comment[:100] }}{% if order.review.comment|length > 100 %}...{% endif %}"</p>
+              {% endif %}
+            </div>
+            {% else %}
+            <p class="no-review"><em>No review yet</em></p>
+            {% endif %}
+          </div>
+          
+          <div class="order-actions">
+            <a href="{{ url_for('vendor_view_order', order_id=order.id) }}" class="btn btn-secondary">View Details</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>No completed orders yet. Keep working on your current orders!</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<style>
+  .vendor-dashboard {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  
+  .dashboard-header {
+    background: linear-gradient(135deg, var(--purple), var(--dark-purple));
+    color: white;
+    padding: 40px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 32px;
+    margin: 0 0 8px 0;
+  }
+  
+  .subtitle {
+    opacity: 0.9;
+    margin: 0 0 24px 0;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+  
+  .stat-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  
+  .stat-number {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  
+  .stat-label {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+  
+  .tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 30px;
+  }
+  
+  .tab-btn {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 16px;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .tab-btn:hover {
+    color: var(--purple);
+  }
+  
+  .tab-btn.active {
+    color: var(--purple);
+    border-bottom-color: var(--purple);
+  }
+  
+  .tab-content {
+    display: none;
+  }
+  
+  .tab-content.active {
+    display: block;
+  }
+  
+  .section-header {
+    margin-bottom: 24px;
+  }
+  
+  .section-header h2 {
+    font-size: 24px;
+    margin: 0 0 8px 0;
+  }
+  
+  .section-header p {
+    color: #666;
+    margin: 0;
+  }
+  
+  .orders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 24px;
+  }
+  
+  .order-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.3s;
+  }
+  
+  .order-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .order-header h3 {
+    font-size: 18px;
+    margin: 0 0 4px 0;
+    color: var(--purple);
+  }
+  
+  .order-date {
+    font-size: 13px;
+    color: #999;
+  }
+  
+  .badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .badge-pending {
+    background: #e3f2fd;
+    color: #1976d2;
+  }
+  
+  .badge-warning {
+    background: #fff3e0;
+    color: #f57c00;
+  }
+  
+  .badge-success {
+    background: #e8f5e9;
+    color: #388e3c;
+  }
+  
+  .badge-completed {
+    background: #f3e5f5;
+    color: #7b1fa2;
+  }
+  
+  .order-info {
+    margin-bottom: 16px;
+  }
+  
+  .order-info p {
+    margin: 8px 0;
+    font-size: 14px;
+  }
+  
+  .notes-preview {
+    background: #f9f9f9;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+  
+  .order-items-preview {
+    background: #f9f9f9;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  
+  .order-items-preview ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+  }
+  
+  .order-items-preview li {
+    margin: 4px 0;
+  }
+  
+  .quote-status {
+    background: #f0f7ff;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  
+  .customer-response {
+    margin: 8px 0 0 0;
+    color: #666;
+    font-style: italic;
+  }
+  
+  .review-display {
+    background: #fff9e6;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+  
+  .stars {
+    color: #ffa000;
+    font-size: 16px;
+    margin-left: 8px;
+  }
+  
+  .star.filled {
+    color: #ffa000;
+  }
+  
+  .star {
+    color: #ddd;
+  }
+  
+  .review-comment {
+    margin: 8px 0 0 0;
+    color: #666;
+  }
+  
+  .no-review {
+    color: #999;
+    font-style: italic;
+    margin: 8px 0 0 0;
+  }
+  
+  .order-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .btn-primary {
+    background: var(--purple);
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background: var(--dark-purple);
+  }
+  
+  .btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+  }
+  
+  .btn-secondary:hover {
+    background: #e0e0e0;
+  }
+  
+  .btn-success {
+    background: #4caf50;
+    color: white;
+  }
+  
+  .btn-success:hover {
+    background: #388e3c;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+  }
+  
+  @media (max-width: 768px) {
+    .orders-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .tab-btn {
+      white-space: nowrap;
+    }
+  }
+</style>
+
+<script>
+  // Tab switching functionality
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const tabName = this.dataset.tab;
+      
+      // Remove active class from all tabs and contents
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      // Add active class to clicked tab and corresponding content
+      this.classList.add('active');
+      document.getElementById(tabName).classList.add('active');
+    });
+  });
+</script>
+{% endblock %}

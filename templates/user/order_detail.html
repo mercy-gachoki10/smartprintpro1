@@ -1,0 +1,969 @@
+{% extends "base.html" %}
+
+{% block title %}Order {{ order.order_number }} — SmartPrint Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+  * { box-sizing: border-box; }
+  
+  .order-detail-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--purple);
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 24px;
+    transition: gap 0.2s;
+  }
+
+  .back-link:hover {
+    gap: 12px;
+  }
+
+  .order-header {
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+  }
+
+  .order-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .order-title h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    color: var(--purple);
+  }
+
+  .order-date {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .status-pending { background: #fff3cd; color: #856404; }
+  .status-awaiting_vendor { background: #cfe2ff; color: #084298; }
+  .status-quoted { background: #e7d1f9; color: #5a1a8f; }
+  .status-quote_revised { background: #f8e8ff; color: #6b21a8; }
+  .status-accepted { background: #d1e7dd; color: #0f5132; }
+  .status-in_progress { background: #e7d1f9; color: #5a1a8f; }
+  .status-ready { background: #b8e0d2; color: #0a5c42; }
+  .status-dispatched { background: #cfe2ff; color: #084298; }
+  .status-completed { background: #d1e7dd; color: #0a3622; }
+  .status-cancelled { background: #f8d7da; color: #842029; }
+
+  .progress-timeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-top: 24px;
+    padding: 24px;
+    background: #faf9fc;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  .timeline-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    min-width: 120px;
+  }
+
+  .timeline-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: 100%;
+    height: 3px;
+    background: #e8e6f2;
+    z-index: 1;
+  }
+
+  .timeline-step.completed:not(:last-child)::after {
+    background: var(--purple);
+  }
+
+  .timeline-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e8e6f2;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-size: 18px;
+    position: relative;
+    z-index: 2;
+    border: 3px solid white;
+  }
+
+  .timeline-step.completed .timeline-icon {
+    background: var(--purple);
+    color: white;
+  }
+
+  .timeline-step.active .timeline-icon {
+    background: var(--purple);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(107,33,168,0.2);
+  }
+
+  .timeline-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .timeline-step.completed .timeline-label,
+  .timeline-step.active .timeline-label {
+    color: var(--purple);
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  @media(max-width: 968px) {
+    .content-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .card {
+    background: white;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  .card h2 {
+    margin: 0 0 20px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--purple);
+  }
+
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+  }
+
+  .items-table th {
+    text-align: left;
+    padding: 12px;
+    background: #faf9fc;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--muted);
+    border-bottom: 2px solid #e8e6f2;
+  }
+
+  .items-table td {
+    padding: 16px 12px;
+    border-bottom: 1px solid #e8e6f2;
+    font-size: 14px;
+  }
+
+  .spec-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .spec-badge {
+    background: #f5f3f8;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #e8e6f2;
+  }
+
+  .info-row:last-child {
+    border-bottom: none;
+  }
+
+  .info-label {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .info-value {
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--purple);
+    border-top: 2px solid #e8e6f2;
+    margin-top: 12px;
+  }
+
+  /* Quote Card */
+  .quote-card {
+    background: linear-gradient(135deg, #f5f3f8 0%, #faf9fc 100%);
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    border: 2px solid #e8e6f2;
+  }
+
+  .quote-card.active {
+    border-color: var(--purple);
+    background: linear-gradient(135deg, #ede8f5 0%, #f5f3f8 100%);
+  }
+
+  .quote-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .quote-number {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--purple);
+  }
+
+  .quote-status {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+  }
+
+  .quote-status.pending {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .quote-status.accepted {
+    background: #d1e7dd;
+    color: #0f5132;
+  }
+
+  .quote-status.rejected {
+    background: #f8d7da;
+    color: #842029;
+  }
+
+  .quote-message {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    margin: 12px 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .quote-pricing {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .quote-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+  }
+
+  .btn-primary {
+    background: var(--purple);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #571590;
+  }
+
+  .btn-success {
+    background: #198754;
+    color: white;
+  }
+
+  .btn-success:hover {
+    background: #157347;
+  }
+
+  .btn-danger {
+    background: #dc3545;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background: #bb2d3b;
+  }
+
+  .btn-secondary {
+    background: #e8e6f2;
+    color: var(--purple);
+  }
+
+  .btn-secondary:hover {
+    background: #d4d0e2;
+  }
+
+  .response-form {
+    margin-top: 16px;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+  }
+
+  .response-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e8e6f2;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .response-form textarea:focus {
+    outline: none;
+    border-color: var(--purple);
+  }
+
+  .vendor-info {
+    background: #faf9fc;
+    padding: 16px;
+    border-radius: 8px;
+  }
+
+  .vendor-name {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--purple);
+    margin-bottom: 8px;
+  }
+
+  .vendor-rating {
+    color: #f59e0b;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .review-form {
+    margin-top: 24px;
+    padding: 24px;
+    background: #faf9fc;
+    border-radius: 12px;
+  }
+
+  .star-rating {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+  .star {
+    font-size: 32px;
+    color: #e8e6f2;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .star.selected,
+  .star:hover {
+    color: #f59e0b;
+  }
+
+  .alert {
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+
+  .alert-success {
+    background: #d1e7dd;
+    color: #0f5132;
+    border-left: 4px solid #0a3622;
+  }
+
+  .alert-info {
+    background: #cfe2ff;
+    color: #084298;
+    border-left: 4px solid #052c65;
+  }
+
+  .history-timeline {
+    position: relative;
+    padding-left: 32px;
+  }
+
+  .history-item {
+    position: relative;
+    padding-bottom: 24px;
+  }
+
+  .history-item::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 8px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--purple);
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #e8e6f2;
+  }
+
+  .history-item::after {
+    content: '';
+    position: absolute;
+    left: -21px;
+    top: 20px;
+    width: 2px;
+    height: calc(100% - 12px);
+    background: #e8e6f2;
+  }
+
+  .history-item:last-child::after {
+    display: none;
+  }
+
+  .history-date {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .history-action {
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+
+  .history-notes {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .processing-status {
+    padding: 12px;
+  }
+
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .status-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="order-detail-container">
+  <a href="{{ url_for('dashboard') }}" class="back-link">
+    ← Back to Dashboard
+  </a>
+
+  <!-- Order Header -->
+  <div class="order-header">
+    <div class="order-header-top">
+      <div class="order-title">
+        <h1>{{ order.order_number }}</h1>
+        <p class="order-date">Created on {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+        {% if order.quote_deadline and not order.vendor_id %}
+        <div style="margin-top: 12px; padding: 10px; background: {% if order.is_quote_deadline_passed %}#f8d7da{% else %}#fff3cd{% endif %}; border-radius: 8px; font-size: 14px;">
+          <strong>⏱️ Quote Deadline:</strong> 
+          {% if order.is_quote_deadline_passed %}
+            <span style="color: #842029;">Closed - {{ order.quote_deadline.strftime('%b %d at %I:%M %p') }}</span>
+          {% else %}
+            <span style="color: #856404;">{{ order.time_remaining_for_quotes }} remaining (closes {{ order.quote_deadline.strftime('%b %d at %I:%M %p') }})</span>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      <span class="status-badge status-{{ order.status }}">
+        {{ order.status.replace('_', ' ').title() }}
+      </span>
+    </div>
+
+    <!-- Progress Timeline -->
+    <div class="progress-timeline">
+      <div class="timeline-step {% if order.status != 'pending' %}completed{% endif %} {% if order.status == 'pending' %}active{% endif %}">
+        <div class="timeline-icon">📝</div>
+        <div class="timeline-label">Ordered</div>
+      </div>
+      <div class="timeline-step {% if order.vendor_id %}completed{% endif %} {% if order.status == 'awaiting_vendor' %}active{% endif %}">
+        <div class="timeline-icon">💰</div>
+        <div class="timeline-label">Quote Accepted</div>
+      </div>
+      <div class="timeline-step {% if order.status in ['ready', 'dispatched', 'completed'] %}completed{% endif %} {% if order.status == 'in_progress' %}active{% endif %}">
+        <div class="timeline-icon">🖨️</div>
+        <div class="timeline-label">In Progress</div>
+      </div>
+      <div class="timeline-step {% if order.status in ['dispatched', 'completed'] %}completed{% endif %} {% if order.status == 'ready' %}active{% endif %}">
+        <div class="timeline-icon">✅</div>
+        <div class="timeline-label">Ready</div>
+      </div>
+      <div class="timeline-step {% if order.status == 'completed' %}completed{% endif %} {% if order.status == 'dispatched' %}active{% endif %}">
+        <div class="timeline-icon">🚚</div>
+        <div class="timeline-label">Dispatched</div>
+      </div>
+      <div class="timeline-step {% if order.status == 'completed' %}completed active{% endif %}">
+        <div class="timeline-icon">🎉</div>
+        <div class="timeline-label">Completed</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <!-- Left Column -->
+    <div>
+      <!-- Items Card -->
+      <div class="card">
+        <h2>📦 Order Items</h2>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in order.order_items %}
+            <tr>
+              <td>
+                <strong>{{ item.service_name }}</strong>
+                <div class="spec-row">
+                  {% if item.paper_size %}<span class="spec-badge">📏 {{ item.paper_size }}</span>{% endif %}
+                  {% if item.color_option %}<span class="spec-badge">🎨 {{ item.color_option }}</span>{% endif %}
+                  {% if item.binding_type %}<span class="spec-badge">📚 {{ item.binding_type }}</span>{% endif %}
+                  {% if item.paper_type %}<span class="spec-badge">📄 {{ item.paper_type }}</span>{% endif %}
+                </div>
+                {% if item.file_name %}
+                <div style="margin-top:8px;font-size:13px;color:var(--muted);">
+                  📎 {{ item.file_name }}
+                </div>
+                {% endif %}
+              </td>
+              <td>{{ item.quantity }}</td>
+              <td>KSh {{ "%.2f"|format(item.unit_price) }}</td>
+              <td><strong>KSh {{ "%.2f"|format(item.total_price) }}</strong></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e8e6f2;">
+          <div class="info-row">
+            <span class="info-label">Base Fee</span>
+            <span class="info-value">KSh {{ "%.2f"|format(order.base_fee) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Subtotal</span>
+            <span class="info-value">KSh {{ "%.2f"|format(order.subtotal) }}</span>
+          </div>
+          <div class="total-row">
+            <span>Total Amount</span>
+            <span>KSh {{ "%.2f"|format(order.total_amount) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quotes Section -->
+      {% if order.quotes %}
+      <div class="card" style="margin-top: 24px;">
+        <h2>💰 Quotes Received ({{ order.quotes|length }})</h2>
+        {% if order.quotes|length > 1 and not order.vendor_id %}
+        <div class="alert-info" style="padding: 12px; background: #cfe2ff; border-left: 4px solid #052c65; border-radius: 6px; margin-bottom: 16px;">
+          <strong>💡 Multiple Quotes Available!</strong> Compare offers from {{ order.quotes|length }} vendors and choose the best one for your needs.
+        </div>
+        {% endif %}
+        {% for quote in order.quotes|reverse %}
+        <div class="quote-card {% if quote.status == 'pending' %}active{% endif %}">
+          <div class="quote-header">
+            <div>
+              <span class="quote-number">From: {{ quote.vendor.business_name }}</span>
+              {% if quote.vendor.reviews %}
+              <div style="font-size: 12px; color: #f59e0b; margin-top: 4px;">
+                ⭐ {{ "%.1f"|format(quote.vendor.reviews|map(attribute='rating')|sum / quote.vendor.reviews|length) }} 
+                ({{ quote.vendor.reviews|length }} reviews)
+              </div>
+              {% endif %}
+            </div>
+            <span class="quote-status {{ quote.status }}">{{ quote.status.title() }}</span>
+          </div>
+          
+          <div class="quote-pricing" style="margin-top: 12px; font-size: 18px;">
+            <span>Quote Total:</span>
+            <span style="color: var(--purple);">KSh {{ "%.2f"|format(quote.total_amount) }}</span>
+          </div>
+          
+          {% if quote.vendor_message %}
+          <div class="quote-message">
+            <strong>Message from Vendor:</strong><br>
+            {{ quote.vendor_message }}
+          </div>
+          {% endif %}
+          
+          <div style="margin-top: 12px; padding: 10px; background: #faf9fc; border-radius: 6px; font-size: 13px;">
+            <strong>Quote Details:</strong><br>
+            Base Fee: KSh {{ "%.2f"|format(quote.base_fee) }} | 
+            Items: KSh {{ "%.2f"|format(quote.subtotal) }}
+          </div>
+
+          {% if quote.customer_response %}
+          <div class="quote-message" style="background: #f5f3f8;">
+            <strong>Your Response:</strong><br>
+            {{ quote.customer_response }}
+          </div>
+          {% endif %}
+
+          {% if quote.status == 'pending' %}
+          <div class="quote-actions">
+            <form method="POST" action="{{ url_for('customer_respond_to_quote', order_id=order.id, quote_id=quote.id) }}" style="flex: 1;">
+              {{ form.hidden_tag() }}
+              <input type="hidden" name="action" value="accept">
+              <button type="submit" class="btn btn-success" style="width: 100%;">✓ Accept & Assign Vendor</button>
+            </form>
+            <button type="button" class="btn btn-danger" onclick="toggleRejectForm({{ quote.id }})" style="flex: 1;">✗ Reject</button>
+          </div>
+          
+          <form id="reject-form-{{ quote.id }}" method="POST" action="{{ url_for('customer_respond_to_quote', order_id=order.id, quote_id=quote.id) }}" class="response-form" style="display:none;">
+            {{ form.hidden_tag() }}
+            <input type="hidden" name="action" value="reject">
+            <label style="display:block;margin-bottom:8px;font-weight:600;">Reason for rejection:</label>
+            <textarea name="customer_response" placeholder="Please explain why you're rejecting this quote..." required></textarea>
+            <div style="display:flex;gap:12px;margin-top:12px;">
+              <button type="submit" class="btn btn-danger">Submit Rejection</button>
+              <button type="button" class="btn btn-secondary" onclick="toggleRejectForm({{ quote.id }})">Cancel</button>
+            </div>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% elif not order.vendor_id %}
+      <div class="card" style="text-align: center; padding: 40px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+        <h3 style="color: var(--purple); margin-bottom: 8px;">Waiting for Vendor Quotes</h3>
+        <p style="color: var(--muted);">Vendors have until {{ order.quote_deadline.strftime('%B %d at %I:%M %p') }} to submit quotes.</p>
+        <p style="color: var(--muted); margin-top: 8px;">You'll be notified when quotes are received.</p>
+      </div>
+      {% endif %}
+
+      <!-- Review Section (for completed orders) -->
+      {% if order.status == 'completed' and not order.review %}
+      <div class="card review-form">
+        <h2>⭐ Rate Your Experience</h2>
+        <p style="color: var(--muted); margin-bottom: 16px;">How was your experience with {{ order.vendor.business_name }}?</p>
+        
+        <form method="POST" action="{{ url_for('customer_submit_review', order_id=order.id) }}">
+          {{ form.hidden_tag() }}
+          
+          <label style="display:block;margin-bottom:8px;font-weight:600;">Rating:</label>
+          <div class="star-rating">
+            <span class="star" data-rating="1" onclick="setRating(1)">★</span>
+            <span class="star" data-rating="2" onclick="setRating(2)">★</span>
+            <span class="star" data-rating="3" onclick="setRating(3)">★</span>
+            <span class="star" data-rating="4" onclick="setRating(4)">★</span>
+            <span class="star" data-rating="5" onclick="setRating(5)">★</span>
+          </div>
+          <input type="hidden" name="rating" id="rating-input" required>
+          
+          <label style="display:block;margin:16px 0 8px;font-weight:600;">Your Review:</label>
+          <textarea name="comment" placeholder="Share your experience..." style="width:100%;padding:12px;border:2px solid #e8e6f2;border-radius:8px;font-family:inherit;min-height:100px;"></textarea>
+          
+          <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Submit Review</button>
+        </form>
+      </div>
+      {% elif order.review %}
+      <div class="card" style="margin-top: 24px; background: #faf9fc;">
+        <h2>⭐ Your Review</h2>
+        <div class="vendor-rating" style="font-size: 24px; margin: 12px 0;">
+          {% for i in range(order.review.rating) %}★{% endfor %}{% for i in range(5 - order.review.rating) %}☆{% endfor %}
+        </div>
+        <p style="color: var(--muted); font-style: italic;">{{ order.review.comment }}</p>
+        <p style="font-size: 12px; color: var(--muted); margin-top: 12px;">
+          Submitted on {{ order.review.created_at.strftime('%B %d, %Y') }}
+        </p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Column -->
+    <div>
+      <!-- Vendor Info -->
+      {% if order.vendor %}
+      <div class="card">
+        <h2>🏪 Vendor</h2>
+        <div class="vendor-info">
+          <div class="vendor-name">{{ order.vendor.business_name }}</div>
+          {% if order.vendor.received_reviews %}
+          <div class="vendor-rating">
+            ⭐ {{ "%.1f"|format(order.vendor.received_reviews|map(attribute='rating')|sum / order.vendor.received_reviews|length) }} 
+            ({{ order.vendor.received_reviews|length }} reviews)
+          </div>
+          {% endif %}
+          <p style="color: var(--muted); font-size: 14px; margin-top: 8px;">
+            📧 {{ order.vendor.email }}<br>
+            📱 {{ order.vendor.phone }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Order Processing Status -->
+      {% if order.status in ['in_progress', 'confirmed_received', 'processing', 'finished', 'quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment'] %}
+      <div class="card" style="margin-top: 24px;">
+        <h2>📋 Processing Status</h2>
+        
+        <!-- Progress Timeline -->
+        <div style="display: flex; justify-content: space-between; margin: 24px 0; position: relative;">
+          <div style="position: absolute; top: 20px; left: 5%; right: 5%; height: 2px; background: #e8e6f2; z-index: 0;"></div>
+          
+          <!-- Accepted -->
+          <div style="flex: 1; text-align: center; position: relative; z-index: 1;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 8px; background: {% if order.status in ['in_progress', 'confirmed_received', 'processing', 'finished', 'quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}var(--purple){% else %}#e8e6f2{% endif %}; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              📥
+            </div>
+            <div style="font-size: 11px; font-weight: 600; color: {% if order.status == 'in_progress' %}var(--purple){% else %}#6b6b77{% endif %};">Accepted</div>
+          </div>
+          
+          <!-- Confirmed -->
+          <div style="flex: 1; text-align: center; position: relative; z-index: 1;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 8px; background: {% if order.status in ['confirmed_received', 'processing', 'finished', 'quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}var(--purple){% else %}#e8e6f2{% endif %}; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              ✅
+            </div>
+            <div style="font-size: 11px; font-weight: 600; color: {% if order.status == 'confirmed_received' %}var(--purple){% else %}#6b6b77{% endif %};">Confirmed</div>
+          </div>
+          
+          <!-- Processing -->
+          <div style="flex: 1; text-align: center; position: relative; z-index: 1;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 8px; background: {% if order.status in ['processing', 'finished', 'quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}var(--purple){% else %}#e8e6f2{% endif %}; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              🖨️
+            </div>
+            <div style="font-size: 11px; font-weight: 600; color: {% if order.status == 'processing' %}var(--purple){% else %}#6b6b77{% endif %};">Processing</div>
+          </div>
+          
+          <!-- Finished -->
+          <div style="flex: 1; text-align: center; position: relative; z-index: 1;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 8px; background: {% if order.status in ['finished', 'quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}var(--purple){% else %}#e8e6f2{% endif %}; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              ✔️
+            </div>
+            <div style="font-size: 11px; font-weight: 600; color: {% if order.status == 'finished' %}var(--purple){% else %}#6b6b77{% endif %};">Finished</div>
+          </div>
+          
+          <!-- Quality Check -->
+          <div style="flex: 1; text-align: center; position: relative; z-index: 1;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 8px; background: {% if order.status in ['quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}var(--purple){% else %}#e8e6f2{% endif %}; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              🔍
+            </div>
+            <div style="font-size: 11px; font-weight: 600; color: {% if order.status == 'quality_check' %}var(--purple){% else %}#6b6b77{% endif %};">Checked</div>
+          </div>
+          
+          <!-- Ready -->
+          <div style="flex: 1; text-align: center; position: relative; z-index: 1;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 8px; background: {% if order.status in ['ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}var(--purple){% else %}#e8e6f2{% endif %}; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              📦
+            </div>
+            <div style="font-size: 11px; font-weight: 600; color: {% if order.status == 'ready_dispatch' %}var(--purple){% else %}#6b6b77{% endif %};">Ready</div>
+          </div>
+          
+          <!-- Dispatched -->
+          <div style="flex: 1; text-align: center; position: relative; z-index: 1;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 8px; background: {% if order.status in ['dispatched', 'awaiting_payment', 'completed'] %}var(--purple){% else %}#e8e6f2{% endif %}; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              🚚
+            </div>
+            <div style="font-size: 11px; font-weight: 600; color: {% if order.status == 'dispatched' %}var(--purple){% else %}#6b6b77{% endif %};">Dispatched</div>
+          </div>
+          
+          <!-- Payment -->
+          <div style="flex: 1; text-align: center; position: relative; z-index: 1;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 8px; background: {% if order.status in ['awaiting_payment', 'completed'] %}var(--purple){% else %}#e8e6f2{% endif %}; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              💰
+            </div>
+            <div style="font-size: 11px; font-weight: 600; color: {% if order.status == 'awaiting_payment' %}var(--purple){% else %}#6b6b77{% endif %};">Payment</div>
+          </div>
+          
+          <!-- Completed -->
+          <div style="flex: 1; text-align: center; position: relative; z-index: 1;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 8px; background: {% if order.status == 'completed' %}var(--purple){% else %}#e8e6f2{% endif %}; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              🎉
+            </div>
+            <div style="font-size: 11px; font-weight: 600; color: {% if order.status == 'completed' %}var(--purple){% else %}#6b6b77{% endif %};">Done</div>
+          </div>
+        </div>
+        
+        <!-- Current Status Card -->
+        <div style="margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #f5f3f8 0%, #faf9fc 100%); border-radius: 12px; border-left: 4px solid var(--purple);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 32px;">
+              {% if order.status == 'in_progress' %}📥
+              {% elif order.status == 'confirmed_received' %}✅
+              {% elif order.status == 'processing' %}🖨️
+              {% elif order.status == 'finished' %}✔️
+              {% elif order.status == 'quality_check' %}🔍
+              {% elif order.status == 'ready_dispatch' %}📦
+              {% elif order.status == 'dispatched' %}🚚
+              {% elif order.status == 'awaiting_payment' %}💰
+              {% endif %}
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 16px; color: var(--purple); margin-bottom: 4px;">
+                {{ order.status.replace('_', ' ').title() }}
+              </div>
+              <div style="font-size: 13px; color: var(--muted);">
+                {% if order.status == 'in_progress' %}Quote accepted - Vendor preparing to start
+                {% elif order.status == 'confirmed_received' %}Vendor has confirmed receipt of your order
+                {% elif order.status == 'processing' %}Vendor is currently working on your order
+                {% elif order.status == 'finished' %}Production completed, pending quality check
+                {% elif order.status == 'quality_check' %}Quality inspection in progress
+                {% elif order.status == 'ready_dispatch' %}Order packaged and ready for dispatch
+                {% elif order.status == 'dispatched' %}Order has been dispatched to you
+                {% elif order.status == 'awaiting_payment' %}Order delivered, payment pending
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Latest status update note -->
+        {% if order.status_history %}
+        {% set latest_update = order.status_history[0] %}
+        {% if latest_update.notes %}
+        <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #e8e6f2;">
+          <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">
+            <strong>Latest Update:</strong> {{ latest_update.created_at.strftime('%b %d at %I:%M %p') }}
+          </div>
+          <div style="font-size: 14px; color: #333;">
+            {{ latest_update.notes }}
+          </div>
+        </div>
+        {% endif %}
+        {% endif %}
+      </div>
+      {% endif %}
+      {% endif %}
+
+      <!-- Order History -->
+      {% if order.status_history %}
+      <div class="card" style="margin-top: 24px;">
+        <h2>📋 Order History</h2>
+        <div class="history-timeline">
+          {% for history in order.status_history|reverse %}
+          <div class="history-item">
+            <div class="history-date">{{ history.created_at.strftime('%b %d, %Y at %I:%M %p') }}</div>
+            <div class="history-action">{{ history.new_status.replace('_', ' ').title() }}</div>
+            {% if history.notes %}
+            <div class="history-notes">{{ history.notes }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Actions Card -->
+      {% if order.status == 'dispatched' %}
+      <div class="card" style="margin-top: 24px;">
+        <h2>📦 Delivery Confirmation</h2>
+        <p style="color: var(--muted); margin-bottom: 16px;">Have you received your order?</p>
+        <form method="POST" action="{{ url_for('customer_confirm_receipt', order_id=order.id) }}">
+          {{ form.hidden_tag() }}
+          <button type="submit" class="btn btn-success" style="width: 100%;">✓ Confirm Receipt</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleRejectForm(quoteId) {
+  const form = document.getElementById('reject-form-' + quoteId);
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function setRating(rating) {
+  document.getElementById('rating-input').value = rating;
+  const stars = document.querySelectorAll('.star');
+  stars.forEach((star, index) => {
+    if (index < rating) {
+      star.classList.add('selected');
+    } else {
+      star.classList.remove('selected');
+    }
+  });
+}
+</script>
+{% endblock %}

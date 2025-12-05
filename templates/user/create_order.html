@@ -1,0 +1,685 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Order — SmartPrint Pro{% endblock %}
+
+{% block content %}
+
+<style>
+  .order-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+
+  .order-header {
+    background: linear-gradient(135deg, var(--purple) 0%, #571590 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 12px;
+    margin-bottom: 28px;
+  }
+
+  .order-header h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+  }
+
+  .card {
+    background: white;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+  }
+
+  .card h2 {
+    margin: 0 0 20px;
+    font-size: 20px;
+    color: var(--purple);
+    font-weight: 700;
+  }
+
+  .order-item {
+    border: 2px solid #e8e6f2;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .order-item.uploading {
+    background: #faf9fc;
+    border-color: var(--purple);
+  }
+
+  .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .item-number {
+    font-weight: 700;
+    color: var(--purple);
+    font-size: 16px;
+  }
+
+  .btn-remove-item {
+    background: #fee;
+    color: #c00;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--purple);
+    font-size: 14px;
+  }
+
+  .form-group select,
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e8e6f2;
+    border-radius: 8px;
+    font-size: 15px;
+  }
+
+  .form-group select:focus,
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px rgba(107,33,168,0.1);
+  }
+
+  .upload-area {
+    border: 2px dashed #e8e6f2;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    background: #faf9fc;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 12px;
+  }
+
+  .upload-area:hover {
+    border-color: var(--purple);
+    background: #f5f3f8;
+  }
+
+  .upload-area.has-file {
+    border-color: #0a3622;
+    background: #d1e7dd;
+  }
+
+  .file-info {
+    display: none;
+    margin-top: 12px;
+    padding: 12px;
+    background: #e7f3ff;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  .file-info.visible {
+    display: block;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #e8e6f2;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .progress-bar.active {
+    display: block;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--purple);
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  .price-display {
+    text-align: right;
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 12px;
+  }
+
+  .price-display strong {
+    color: var(--purple);
+    font-size: 18px;
+  }
+
+  .btn-add-item {
+    background: #e8e6f2;
+    color: var(--purple);
+    border: 2px dashed var(--purple);
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+    display: block;
+    width: 100%;
+    transition: all 0.2s;
+  }
+
+  .btn-add-item:hover {
+    background: #d4d0e2;
+  }
+
+  .btn-add-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .order-summary {
+    background: linear-gradient(135deg, #f5f3f8 0%, #faf9fc 100%);
+    padding: 24px;
+    border-radius: 12px;
+    margin-top: 24px;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 15px;
+  }
+
+  .summary-row.total {
+    border-top: 2px solid var(--purple);
+    padding-top: 12px;
+    margin-top: 12px;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--purple);
+  }
+
+  .btn-submit-order {
+    background: var(--purple);
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 16px;
+    width: 100%;
+    margin-top: 20px;
+    transition: background 0.2s;
+  }
+
+  .btn-submit-order:hover {
+    background: #571590;
+  }
+
+  .btn-submit-order:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .alert {
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+
+  .alert-info {
+    background: #cfe2ff;
+    color: #084298;
+    border-left: 4px solid #052c65;
+  }
+
+  .file-input {
+    display: none;
+  }
+  
+  .file-report {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    font-size: 13px;
+    display: none;
+  }
+  
+  .file-report.visible {
+    display: block;
+  }
+  
+  .file-report h4 {
+    margin: 0 0 10px;
+    color: var(--purple);
+    font-size: 14px;
+  }
+  
+  .file-report-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #e0f2fe;
+  }
+  
+  .file-report-row:last-child {
+    border-bottom: none;
+  }
+  
+  .file-report-label {
+    font-weight: 600;
+    color: #334155;
+  }
+  
+  .file-report-value {
+    color: #64748b;
+  }
+</style>
+
+<div class="order-container">
+  <div class="order-header">
+    <h1>📋 Create New Order</h1>
+    <p>Add up to 5 items to your order. Each item can have different specifications.</p>
+  </div>
+
+  <div class="alert alert-info">
+    <strong>💡 Tip:</strong> Upload files for services that require them (documents, photos, custom designs). Prices shown are estimates and will be confirmed by staff.
+  </div>
+
+  <div class="card">
+    <h2>Order Items</h2>
+    
+    <form id="orderForm" method="POST" enctype="multipart/form-data">
+      {{ form.hidden_tag() }}
+      
+      <div id="orderItemsContainer">
+        <!-- Order items will be added here dynamically -->
+      </div>
+
+      <button type="button" id="btnAddItem" class="btn-add-item" onclick="addOrderItem()">
+        + Add Another Item (0/5)
+      </button>
+
+      <div class="form-group" style="margin-top: 24px;">
+        <label for="customerNotes">Additional Notes (Optional)</label>
+        <textarea id="customerNotes" name="customer_notes" rows="3" placeholder="Special instructions or requirements..."></textarea>
+      </div>
+
+      <div class="form-group" style="margin-top: 20px;">
+        <label for="quoteDuration">Quote Deadline ⏱️</label>
+        <select id="quoteDuration" name="quote_duration" required style="padding: 12px; border: 2px solid #e8e6f2; border-radius: 8px; font-size: 14px; width: 100%;">
+          <option value="6">6 hours - Urgent (vendors have 6 hours to quote)</option>
+          <option value="12">12 hours - Fast (vendors have 12 hours to quote)</option>
+          <option value="24" selected>24 hours - Standard (vendors have 1 day to quote)</option>
+          <option value="48">48 hours - Relaxed (vendors have 2 days to quote)</option>
+          <option value="72">72 hours - Extended (vendors have 3 days to quote)</option>
+        </select>
+        <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0;">⚠️ After this time, vendors can no longer submit quotes. Shorter deadlines may result in fewer quotes.</p>
+      </div>
+
+      <div class="order-summary">
+        <h3 style="margin: 0 0 16px; color: var(--purple);">Order Summary</h3>
+        <div class="summary-row">
+          <span>Base Service Fee:</span>
+          <span><strong>KSh 75.00</strong></span>
+        </div>
+        <div class="summary-row">
+          <span>Items Subtotal:</span>
+          <span id="subtotalAmount"><strong>KSh 0.00</strong></span>
+        </div>
+        <div class="summary-row total">
+          <span>Total Amount:</span>
+          <span id="totalAmount">KSh 75.00</span>
+        </div>
+        <p style="font-size: 13px; color: var(--muted); margin: 12px 0 0;">* Final price will be confirmed by staff after review</p>
+      </div>
+
+      <button type="submit" id="btnSubmitOrder" class="btn-submit-order">
+        Submit Order
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const servicePrices = {{ services|tojson }};
+  let itemCount = 0;
+  const MAX_ITEMS = 5;
+  const BASE_FEE = 75.00;
+
+  // Add first item automatically on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    addOrderItem();
+  });
+
+  function addOrderItem() {
+    if (itemCount >= MAX_ITEMS) {
+      alert('Maximum 5 items per order');
+      return;
+    }
+
+    itemCount++;
+    const itemId = 'item-' + itemCount;
+    const currentCount = itemCount;
+    
+    // Build category options
+    const categoryOptions = getUniqueCategories().map(function(cat) {
+      return '<option value="' + cat + '">' + cat + '</option>';
+    }).join('');
+    
+    // Build remove button HTML
+    const removeButton = itemCount > 1 
+      ? '<button type="button" class="btn-remove-item" onclick="removeOrderItem(\'' + itemId + '\')">Remove</button>' 
+      : '';
+    
+    const itemHTML = 
+      '<div class="order-item" id="' + itemId + '">' +
+        '<div class="item-header">' +
+          '<span class="item-number">Item #' + itemCount + '</span>' +
+          removeButton +
+        '</div>' +
+
+        '<div class="form-row">' +
+          '<div class="form-group">' +
+            '<label for="' + itemId + '-category">Service Category *</label>' +
+            '<select id="' + itemId + '-category" name="items[' + currentCount + '][category]" required onchange="updateServiceOptions(\'' + itemId + '\')">' +
+              '<option value="">-- Select Category --</option>' +
+              categoryOptions +
+            '</select>' +
+          '</div>' +
+
+          '<div class="form-group">' +
+            '<label for="' + itemId + '-service">Service Type *</label>' +
+            '<select id="' + itemId + '-service" name="items[' + currentCount + '][service]" required onchange="updatePrice(\'' + itemId + '\')">' +
+              '<option value="">-- Select Service --</option>' +
+            '</select>' +
+          '</div>' +
+
+          '<div class="form-group">' +
+            '<label for="' + itemId + '-quantity">Quantity *</label>' +
+            '<input type="number" id="' + itemId + '-quantity" name="items[' + currentCount + '][quantity]" min="1" value="1" required onchange="updatePrice(\'' + itemId + '\')">' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="form-group">' +
+          '<label for="' + itemId + '-file">Upload File (if required)</label>' +
+          '<input type="file" id="' + itemId + '-file" name="items[' + currentCount + '][file]" class="file-input" accept=".pdf,.docx,.png,.jpg,.jpeg" onchange="handleFileSelect(\'' + itemId + '\')">' +
+          '<div class="upload-area" id="' + itemId + '-upload" onclick="document.getElementById(\'' + itemId + '-file\').click()">' +
+            '<div>📤 Click to upload file</div>' +
+            '<small style="color: #6b6b77; margin-top: 8px; display: block;">PDF, DOCX, PNG, JPG (Max 50MB)</small>' +
+          '</div>' +
+          '<div id="' + itemId + '-progress" class="progress-bar">' +
+            '<div class="progress-fill"></div>' +
+          '</div>' +
+          '<div id="' + itemId + '-fileinfo" class="file-info"></div>' +
+          '<div id="' + itemId + '-report" class="file-report"></div>' +
+        '</div>' +
+
+        '<div class="form-group">' +
+          '<label for="' + itemId + '-specs">Additional Specifications</label>' +
+          '<textarea id="' + itemId + '-specs" name="items[' + currentCount + '][specifications]" rows="2" placeholder="e.g., Paper type, colors, sizes, finishing options..."></textarea>' +
+        '</div>' +
+
+        '<div class="price-display" id="' + itemId + '-price">' +
+          'Estimated Price: <strong>KSh 0.00</strong>' +
+        '</div>' +
+      '</div>';
+
+    document.getElementById('orderItemsContainer').insertAdjacentHTML('beforeend', itemHTML);
+    updateAddButton();
+  }
+
+  function removeOrderItem(itemId) {
+    document.getElementById(itemId).remove();
+    itemCount--;
+    updateAddButton();
+    updateOrderTotal();
+    renumberItems();
+  }
+
+  function renumberItems() {
+    const items = document.querySelectorAll('.order-item');
+    items.forEach((item, index) => {
+      const itemNumber = item.querySelector('.item-number');
+      if (itemNumber) {
+        itemNumber.textContent = `Item #${index + 1}`;
+      }
+    });
+  }
+
+  function updateAddButton() {
+    const btn = document.getElementById('btnAddItem');
+    btn.textContent = '+ Add Another Item (' + itemCount + '/' + MAX_ITEMS + ')';
+    btn.disabled = itemCount >= MAX_ITEMS;
+  }
+
+  function getUniqueCategories() {
+    const categories = servicePrices.map(function(s) {
+      return s.category;
+    });
+    return categories.filter(function(value, index, self) {
+      return self.indexOf(value) === index;
+    });
+  }
+
+  function updateServiceOptions(itemId) {
+    const categorySelect = document.getElementById(itemId + '-category');
+    const serviceSelect = document.getElementById(itemId + '-service');
+    const selectedCategory = categorySelect.value;
+
+    serviceSelect.innerHTML = '<option value="">-- Select Service --</option>';
+
+    if (selectedCategory) {
+      const services = servicePrices.filter(function(s) {
+        return s.category === selectedCategory;
+      });
+      services.forEach(function(service) {
+        const option = document.createElement('option');
+        option.value = service.id;
+        option.textContent = service.service_name + ' (KSh ' + service.average_price + ' ' + service.unit + ')';
+        option.dataset.price = service.average_price;
+        option.dataset.unit = service.unit;
+        serviceSelect.appendChild(option);
+      });
+    }
+
+    updatePrice(itemId);
+  }
+
+  function updatePrice(itemId) {
+    const serviceSelect = document.getElementById(itemId + '-service');
+    const quantityInput = document.getElementById(itemId + '-quantity');
+    const priceDisplay = document.getElementById(itemId + '-price');
+
+    const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+    const unitPrice = parseFloat(selectedOption && selectedOption.dataset && selectedOption.dataset.price ? selectedOption.dataset.price : 0);
+    const quantity = parseInt(quantityInput.value) || 1;
+    const total = unitPrice * quantity;
+
+    priceDisplay.innerHTML = 'Estimated Price: <strong>KSh ' + total.toFixed(2) + '</strong>';
+    
+    updateOrderTotal();
+  }
+
+  function updateOrderTotal() {
+    let subtotal = 0;
+    
+    document.querySelectorAll('.order-item').forEach(function(item) {
+      const itemId = item.id;
+      const serviceSelect = document.getElementById(itemId + '-service');
+      const quantityInput = document.getElementById(itemId + '-quantity');
+      
+      const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+      const unitPrice = parseFloat(selectedOption && selectedOption.dataset && selectedOption.dataset.price ? selectedOption.dataset.price : 0);
+      const quantity = parseInt(quantityInput.value) || 1;
+      
+      subtotal += (unitPrice * quantity);
+    });
+
+    const total = BASE_FEE + subtotal;
+
+    document.getElementById('subtotalAmount').innerHTML = '<strong>KSh ' + subtotal.toFixed(2) + '</strong>';
+    document.getElementById('totalAmount').textContent = 'KSh ' + total.toFixed(2);
+  }
+
+  function handleFileSelect(itemId) {
+    const fileInput = document.getElementById(itemId + '-file');
+    const uploadArea = document.getElementById(itemId + '-upload');
+    const fileInfo = document.getElementById(itemId + '-fileinfo');
+    const progressBar = document.getElementById(itemId + '-progress');
+    const progressFill = progressBar.querySelector('.progress-fill');
+    const reportDiv = document.getElementById(itemId + '-report');
+    const file = fileInput.files[0];
+
+    if (!file) return;
+
+    // Validate file size
+    if (file.size > 50 * 1024 * 1024) {
+      alert('File too large. Maximum size is 50MB.');
+      fileInput.value = '';
+      return;
+    }
+
+    // Show progress bar
+    progressBar.classList.add('active');
+    progressFill.style.width = '0%';
+
+    // Simulate upload progress
+    let progress = 0;
+    const progressInterval = setInterval(function() {
+      progress += 10;
+      progressFill.style.width = progress + '%';
+      
+      if (progress >= 100) {
+        clearInterval(progressInterval);
+        setTimeout(function() {
+          progressBar.classList.remove('active');
+          progressFill.style.width = '0%';
+        }, 500);
+      }
+    }, 100);
+
+    // Update upload area
+    uploadArea.classList.add('has-file');
+    uploadArea.innerHTML = '<div>✅ ' + file.name + '</div><small style="color: #6b6b77;">' + (file.size / 1024 / 1024).toFixed(2) + ' MB</small>';
+    
+    // Show basic file info
+    fileInfo.classList.add('visible');
+    fileInfo.innerHTML = '<strong>File selected:</strong> ' + file.name + ' (' + (file.size / 1024).toFixed(2) + ' KB)';
+
+    // Extract file attributes
+    extractFileAttributes(file, itemId);
+  }
+
+  async function extractFileAttributes(file, itemId) {
+    const reportDiv = document.getElementById(`${itemId}-report`);
+    const fileType = file.name.split('.').pop().toLowerCase();
+    
+    let reportHTML = '<h4>📊 File Analysis Report</h4>';
+    reportHTML += '<div class="file-report-row"><span class="file-report-label">File Name:</span><span class="file-report-value">' + file.name + '</span></div>';
+    reportHTML += '<div class="file-report-row"><span class="file-report-label">File Size:</span><span class="file-report-value">' + (file.size / 1024).toFixed(2) + ' KB</span></div>';
+    reportHTML += '<div class="file-report-row"><span class="file-report-label">File Type:</span><span class="file-report-value">' + fileType.toUpperCase() + '</span></div>';
+
+    if (['png', 'jpg', 'jpeg'].includes(fileType)) {
+      // Extract image dimensions
+      try {
+        const img = new Image();
+        const imageUrl = URL.createObjectURL(file);
+        
+        img.onload = function() {
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">Width:</span><span class="file-report-value">' + img.width + ' px</span></div>';
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">Height:</span><span class="file-report-value">' + img.height + ' px</span></div>';
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">Dimensions:</span><span class="file-report-value">' + img.width + ' × ' + img.height + '</span></div>';
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">Aspect Ratio:</span><span class="file-report-value">' + (img.width / img.height).toFixed(2) + ':1</span></div>';
+          
+          reportDiv.innerHTML = reportHTML;
+          reportDiv.classList.add('visible');
+          URL.revokeObjectURL(imageUrl);
+        };
+        
+        img.src = imageUrl;
+      } catch (error) {
+        console.error('Error extracting image attributes:', error);
+        reportDiv.innerHTML = reportHTML;
+        reportDiv.classList.add('visible');
+      }
+    } else if (fileType === 'pdf') {
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">Type:</span><span class="file-report-value">PDF Document</span></div>';
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">Note:</span><span class="file-report-value">Page count will be analyzed by server</span></div>';
+      reportDiv.innerHTML = reportHTML;
+      reportDiv.classList.add('visible');
+    } else if (fileType === 'docx') {
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">Type:</span><span class="file-report-value">Word Document</span></div>';
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">Note:</span><span class="file-report-value">Content will be analyzed by server</span></div>';
+      reportDiv.innerHTML = reportHTML;
+      reportDiv.classList.add('visible');
+    } else {
+      reportDiv.innerHTML = reportHTML;
+      reportDiv.classList.add('visible');
+    }
+  }
+
+  document.getElementById('orderForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const submitBtn = document.getElementById('btnSubmitOrder');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing Order...';
+
+    const formData = new FormData(this);
+
+    try {
+      const response = await fetch('/create-order', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('✅ Order created successfully!');
+        window.location.href = '/dashboard';
+      } else {
+        alert('❌ Error: ' + (result.error || 'Failed to create order'));
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Order';
+      }
+    } catch (error) {
+      alert('❌ Error creating order. Please try again.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Order';
+    }
+  });
+</script>
+{% endblock %}

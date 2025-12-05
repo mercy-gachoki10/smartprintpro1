@@ -1,0 +1,67 @@
+
+# 📊 Comprehensive Pricing Matrix (Kenya)
+
+| **Category**        | **Option**                          | **Rate (KSh)** | **Notes** |
+|----------------------|--------------------------------------|----------------|-----------|
+| **Base Fee**        | Service handling                     | 50–100         | Applied to every order |
+| **Document Printing** | Black & White (A4)                  | 2–5 per page   | Standard office paper |
+|                      | Color (A4)                          | 8–12 per page  | Standard office paper |
+|                      | Black & White (A3)                  | 5–8 per page   | Larger format |
+|                      | Color (A3)                          | 15–25 per page | Larger format |
+| **Pictures / Photos** | Standard photo print (4x6)          | 30–50 per photo| Glossy finish |
+|                      | Large photo print (A4)              | 150–250 per photo| Poster-size |
+|                      | Extra-large photo (A3)              | 300–500 per photo| Wall-size |
+|                      | Canvas print (A2/A1)                | 1,500–3,000    | Premium wall art |
+| **Framing Options** | Basic plastic frame (A4)             | 300–500        | Budget option |
+|                      | Wooden frame (A4)                   | 500–800        | Classic look |
+|                      | Wooden frame (A3)                   | 800–1,200      | Larger format |
+|                      | Decorative frame (A4/A3)            | 1,000–2,000    | Ornate design |
+|                      | Canvas stretch frame (A2/A1)        | 2,000–4,000    | For canvas prints |
+| **Uniforms**        | Polo shirt with logo (embroidery)    | 800–1,200      | Corporate uniforms |
+|                      | T-shirt with screen print           | 500–800        | Staff/event wear |
+|                      | Branded caps                        | 300–500        | Promotional |
+|                      | Hoodies with embroidery             | 1,500–2,500    | Premium option |
+| **Banners (Digital & Vinyl)** | Small banner (A2)           | 1,000–2,000    | Indoor use |
+|                      | Medium banner (A1)                  | 2,500–4,000    | Event signage |
+|                      | Large outdoor vinyl (A0/3m x 1m)    | 5,000–8,000    | Outdoor advertising |
+| **Signage**         | Acrylic signage (small)              | 2,000–4,000    | Office door signs |
+|                      | Vinyl signage (medium)              | 5,000–10,000   | Shopfront |
+|                      | Billboards (per sqm)                | 2,000–3,500    | Outdoor advertising |
+| **Flyers & Brochures** | Flyers (A5, 100 copies)           | 1,500–2,500    | Bulk discount available |
+|                      | Brochures (A4, folded, 100 copies)  | 3,000–5,000    | Glossy paper |
+|                      | Event prints (posters A3, 50 copies)| 2,500–4,000    | Promotional |
+| **Custom Merchandise** | T-shirts (custom print)           | 500–800        | Screen or DTG printing |
+|                      | Hoodies (custom print)              | 1,500–2,500    | Embroidery or DTG |
+|                      | Caps (embroidered logo)             | 300–500        | Promotional |
+|                      | Embroidery (per logo)               | 200–400        | Add-on service |
+| **Packaging & Labels** | Packaging boxes (small, 50 pcs)   | 2,500–4,000    | Custom printed |
+|                      | Packaging boxes (large, 50 pcs)     | 5,000–8,000    | Heavy-duty |
+|                      | Labels (roll of 500)                | 1,500–3,000    | Stickers for branding |
+|                      | Custom boxes (premium design, 50 pcs)| 8,000–12,000  | Luxury packaging |
+
+---
+
+## 🧮 Example Quote
+Customer requests:
+- **200 flyers (A5, color)**  
+- **10 branded polo shirts with embroidered logo**  
+- **1 medium vinyl banner (A1)**  
+
+### Calculation:
+- Flyers: ~KSh 3,000  
+- Polo shirts: \(10 \cdot 1,000 = 10,000\) KSh  
+- Banner (A1): ~KSh 3,500  
+
+**Total = 16,500 KSh**
+
+---
+
+## ⚙️ Implementation Notes
+- Each category can be a **dropdown menu** on your website.  
+- Store rates in a **JSON or database table** for easy updates.  
+- Quote calculation = **base fee + (selected options × rates)**.  
+- Show a **breakdown** (documents, uniforms, banners, signage, packaging) before checkout.  
+
+---
+
+

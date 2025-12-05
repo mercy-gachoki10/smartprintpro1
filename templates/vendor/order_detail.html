@@ -1,0 +1,606 @@
+{% extends "base.html" %}
+
+{% block title %}Order {{ order.order_number }} — SmartPrint Pro{% endblock %}
+
+{% block content %}
+<section class="order-detail-container">
+  <div class="order-header-section">
+    <div>
+      <h1>Order {{ order.order_number }}</h1>
+      <span class="badge badge-{{ order.status }}">{{ order.status|replace('_', ' ')|title }}</span>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
+  </div>
+
+  <div class="order-grid">
+    <!-- Order Information -->
+    <div class="card">
+      <h2>Order Information</h2>
+      <div class="info-row">
+        <span class="label">Order Number:</span>
+        <span class="value">{{ order.order_number }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Created:</span>
+        <span class="value">{{ order.created_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Status:</span>
+        <span class="value">{{ order.status|replace('_', ' ')|title }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Total Amount:</span>
+        <span class="value">KSh {{ "{:,.2f}".format(order.total_amount) }}</span>
+      </div>
+    </div>
+
+    <!-- Customer Information -->
+    <div class="card">
+      <h2>Customer Details</h2>
+      <div class="info-row">
+        <span class="label">Name:</span>
+        <span class="value">{{ order.customer.full_name }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Email:</span>
+        <span class="value">{{ order.customer.email }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Phone:</span>
+        <span class="value">{{ order.customer.phone }}</span>
+      </div>
+      {% if order.customer_notes %}
+      <div class="info-row">
+        <span class="label">Notes:</span>
+        <span class="value">{{ order.customer_notes }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Order Items -->
+  <div class="card">
+    <h2>Order Items</h2>
+    <div class="items-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Type</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.order_items %}
+          <tr>
+            <td>{{ item.service_category }}</td>
+            <td>{{ item.service_type }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>KSh {{ "{:,.2f}".format(item.unit_price) }}</td>
+            <td>KSh {{ "{:,.2f}".format(item.total_price) }}</td>
+          </tr>
+          {% if item.specifications %}
+          <tr class="spec-row">
+            <td colspan="5">
+              <strong>Specifications:</strong> {{ item.specifications }}
+            </td>
+          </tr>
+          {% endif %}
+          {% if item.file_name %}
+          <tr class="spec-row">
+            <td colspan="5">
+              <strong>File:</strong> {{ item.file_name }}
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" style="text-align: right;"><strong>Base Fee:</strong></td>
+            <td><strong>KSh {{ "{:,.2f}".format(order.base_fee) }}</strong></td>
+          </tr>
+          <tr>
+            <td colspan="4" style="text-align: right;"><strong>Subtotal:</strong></td>
+            <td><strong>KSh {{ "{:,.2f}".format(order.subtotal) }}</strong></td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="4" style="text-align: right;"><strong>Total:</strong></td>
+            <td><strong>KSh {{ "{:,.2f}".format(order.total_amount) }}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="card">
+    <h2>Actions</h2>
+    <div class="action-buttons">
+      {% if order.quotes_open %}
+      <a href="{{ url_for('vendor_submit_quote', order_id=order.id) }}" class="btn btn-primary">
+        {% if order.get_vendor_quote_count(current_user.id) > 0 %}
+          Revise Quote
+        {% else %}
+          Submit Quote
+        {% endif %}
+      </a>
+      {% elif order.vendor_id == current_user.id %}
+        <!-- Order Processing Workflow -->
+        <div class="processing-workflow">
+          <h3 style="margin-bottom: 20px; color: var(--purple);">📋 Order Processing</h3>
+          
+          <!-- Progress Steps -->
+          <div class="progress-steps">
+            <div class="progress-step {% if order.status == 'in_progress' %}active{% elif order.status in ['confirmed_received', 'processing', 'finished', 'quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}completed{% endif %}">
+              <div class="step-icon">📥</div>
+              <div class="step-label">Accepted</div>
+            </div>
+            <div class="progress-step {% if order.status == 'confirmed_received' %}active{% elif order.status in ['processing', 'finished', 'quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}completed{% endif %}">
+              <div class="step-icon">✅</div>
+              <div class="step-label">Confirmed</div>
+            </div>
+            <div class="progress-step {% if order.status == 'processing' %}active{% elif order.status in ['finished', 'quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}completed{% endif %}">
+              <div class="step-icon">🖨️</div>
+              <div class="step-label">Processing</div>
+            </div>
+            <div class="progress-step {% if order.status == 'finished' %}active{% elif order.status in ['quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}completed{% endif %}">
+              <div class="step-icon">✔️</div>
+              <div class="step-label">Finished</div>
+            </div>
+            <div class="progress-step {% if order.status == 'quality_check' %}active{% elif order.status in ['ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}completed{% endif %}">
+              <div class="step-icon">🔍</div>
+              <div class="step-label">Quality Check</div>
+            </div>
+            <div class="progress-step {% if order.status == 'ready_dispatch' %}active{% elif order.status in ['dispatched', 'awaiting_payment', 'completed'] %}completed{% endif %}">
+              <div class="step-icon">📦</div>
+              <div class="step-label">Ready</div>
+            </div>
+            <div class="progress-step {% if order.status == 'dispatched' %}active{% elif order.status in ['awaiting_payment', 'completed'] %}completed{% endif %}">
+              <div class="step-icon">🚚</div>
+              <div class="step-label">Dispatched</div>
+            </div>
+            <div class="progress-step {% if order.status == 'awaiting_payment' %}active{% elif order.status == 'completed' %}completed{% endif %}">
+              <div class="step-icon">💰</div>
+              <div class="step-label">Payment</div>
+            </div>
+            <div class="progress-step {% if order.status == 'completed' %}active completed{% endif %}">
+              <div class="step-icon">🎉</div>
+              <div class="step-label">Completed</div>
+            </div>
+          </div>
+
+          <!-- Status Update Forms -->
+          {% if order.status == 'in_progress' %}
+          <div class="status-update-section">
+            <form method="POST" action="{{ url_for('vendor_update_status', order_id=order.id) }}" style="margin-bottom: 16px;">
+              {{ form.hidden_tag() }}
+              <input type="hidden" name="new_status" value="confirmed_received"/>
+              <div class="form-group">
+                <label for="notes">Confirmation Notes</label>
+                <textarea name="notes" id="notes" placeholder="e.g., Order received and verified..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">✅ Confirm Order Received</button>
+            </form>
+          </div>
+          {% elif order.status == 'confirmed_received' %}
+          <div class="status-update-section">
+            <form method="POST" action="{{ url_for('vendor_update_status', order_id=order.id) }}">
+              {{ form.hidden_tag() }}
+              <input type="hidden" name="new_status" value="processing"/>
+              <div class="form-group">
+                <label for="notes">Processing Notes</label>
+                <textarea name="notes" id="notes" placeholder="e.g., Started printing/production..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">🖨️ Start Processing</button>
+            </form>
+          </div>
+          {% elif order.status == 'processing' %}
+          <div class="status-update-section">
+            <form method="POST" action="{{ url_for('vendor_update_status', order_id=order.id) }}">
+              {{ form.hidden_tag() }}
+              <input type="hidden" name="new_status" value="finished"/>
+              <div class="form-group">
+                <label for="notes">Completion Notes</label>
+                <textarea name="notes" id="notes" placeholder="e.g., Printing/production completed..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+              </div>
+              <button type="submit" class="btn btn-success" style="width:100%;">✔️ Mark as Finished</button>
+            </form>
+          </div>
+          {% elif order.status == 'finished' %}
+          <div class="status-update-section">
+            <form method="POST" action="{{ url_for('vendor_update_status', order_id=order.id) }}">
+              {{ form.hidden_tag() }}
+              <input type="hidden" name="new_status" value="quality_check"/>
+              <div class="form-group">
+                <label for="notes">Quality Check Notes</label>
+                <textarea name="notes" id="notes" placeholder="e.g., Quality checked, all specifications met..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">🔍 Perform Quality Check</button>
+            </form>
+          </div>
+          {% elif order.status == 'quality_check' %}
+          <div class="status-update-section">
+            <form method="POST" action="{{ url_for('vendor_update_status', order_id=order.id) }}">
+              {{ form.hidden_tag() }}
+              <input type="hidden" name="new_status" value="ready_dispatch"/>
+              <div class="form-group">
+                <label for="notes">Packaging Notes</label>
+                <textarea name="notes" id="notes" placeholder="e.g., Packaged and ready for dispatch..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+              </div>
+              <button type="submit" class="btn btn-success" style="width:100%;">📦 Ready for Dispatch</button>
+            </form>
+          </div>
+          {% elif order.status == 'ready_dispatch' %}
+          <div class="status-update-section">
+            <form method="POST" action="{{ url_for('vendor_update_status', order_id=order.id) }}">
+              {{ form.hidden_tag() }}
+              <input type="hidden" name="new_status" value="dispatched"/>
+              <div class="form-group">
+                <label for="notes">Dispatch Details</label>
+                <textarea name="notes" id="notes" placeholder="e.g., Dispatched via courier, tracking number: XXX..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">🚚 Mark as Dispatched</button>
+            </form>
+          </div>
+          {% elif order.status == 'dispatched' %}
+          <div class="status-update-section">
+            <form method="POST" action="{{ url_for('vendor_update_status', order_id=order.id) }}">
+              {{ form.hidden_tag() }}
+              <input type="hidden" name="new_status" value="awaiting_payment"/>
+              <div class="form-group">
+                <label for="notes">Delivery Confirmation</label>
+                <textarea name="notes" id="notes" placeholder="e.g., Delivered to customer, awaiting payment..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+              </div>
+              <button type="submit" class="btn btn-warning" style="width:100%;">💰 Awaiting Payment</button>
+            </form>
+          </div>
+          {% elif order.status == 'awaiting_payment' %}
+          <div class="alert-warning" style="padding:16px; background:#fff3cd; border-radius:8px; margin-top:16px;">
+            <strong>💰 Awaiting Payment</strong><br>
+            Order delivered. Waiting for customer payment confirmation.
+            <form method="POST" action="{{ url_for('vendor_update_status', order_id=order.id) }}" style="margin-top:12px;">
+              {{ form.hidden_tag() }}
+              <input type="hidden" name="new_status" value="completed"/>
+              <div class="form-group">
+                <label for="notes">Payment Confirmation</label>
+                <textarea name="notes" id="notes" placeholder="e.g., Payment received via M-Pesa..." rows="2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+              </div>
+              <button type="submit" class="btn btn-success" style="width:100%; margin-top:8px;">✅ Confirm Payment & Complete</button>
+            </form>
+          </div>
+          {% elif order.status == 'completed' %}
+          <div class="alert-success" style="padding:16px; background:#d1e7dd; border-radius:8px; margin-top:16px;">
+            <strong>🎉 Order Completed!</strong><br>
+            Payment received and order finalized.
+          </div>
+          {% endif %}
+
+          <!-- Customer Files -->
+          {% for item in order.order_items %}
+            {% if item.file_name %}
+            <div style="margin-top:20px; padding:16px; background:#f5f3f8; border-radius:8px;">
+              <h4 style="margin:0 0 12px; color:var(--purple);">📎 Customer Files</h4>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong>{{ item.file_name }}</strong><br>
+                  <small style="color:#6b6b77;">{{ item.service_category }} - {{ item.service_type }}</small>
+                </div>
+                <a href="{{ url_for('download_order_file', order_id=order.id, item_id=item.id) }}" class="btn btn-secondary" style="padding:8px 16px; font-size:13px;">Download</a>
+              </div>
+              {% if item.specifications %}
+              <div style="margin-top:12px; padding:10px; background:white; border-radius:6px;">
+                <strong>Specifications:</strong> {{ item.specifications }}
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% elif order.is_quote_deadline_passed %}
+        <p class="text-muted">The quote deadline has passed.</p>
+      {% elif order.vendor_id %}
+        <p class="text-muted">This order has been assigned to another vendor.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<style>
+  .order-detail-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  
+  .order-header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+  
+  .order-header-section h1 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+  }
+  
+  .processing-workflow {
+    width: 100%;
+  }
+
+  .progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin: 24px 0;
+    position: relative;
+  }
+
+  .progress-steps::before {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 50px;
+    right: 50px;
+    height: 3px;
+    background: #e8e6f2;
+    z-index: 0;
+  }
+
+  .progress-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #e8e6f2;
+    color: #6b6b77;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 24px;
+    border: 4px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .progress-step.active .step-icon {
+    background: var(--purple);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(107,33,168,0.2);
+  }
+
+  .progress-step.completed .step-icon {
+    background: #198754;
+    color: white;
+  }
+
+  .step-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b6b77;
+  }
+
+  .progress-step.active .step-label {
+    color: var(--purple);
+  }
+
+  .progress-step.completed .step-label {
+    color: #198754;
+  }
+
+  .status-update-section {
+    margin-top: 24px;
+    padding: 20px;
+    background: #faf9fc;
+    border-radius: 12px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .alert-info {
+    text-align: center;
+  }
+
+  .alert-success {
+    text-align: center;
+  }
+  
+  .badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .badge-pending {
+    background: #e3f2fd;
+    color: #1976d2;
+  }
+  
+  .badge-awaiting_vendor,
+  .badge-quoted,
+  .badge-quote_revised {
+    background: #fff3e0;
+    color: #f57c00;
+  }
+  
+  .badge-accepted,
+  .badge-in_progress,
+  .badge-ready,
+  .badge-dispatched {
+    background: #e8f5e9;
+    color: #388e3c;
+  }
+  
+  .badge-completed {
+    background: #f3e5f5;
+    color: #7b1fa2;
+  }
+  
+  .order-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .card h2 {
+    font-size: 20px;
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+  
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  
+  .info-row:last-child {
+    border-bottom: none;
+  }
+  
+  .label {
+    font-weight: 600;
+    color: #666;
+  }
+  
+  .value {
+    color: #333;
+    text-align: right;
+  }
+  
+  .items-table {
+    overflow-x: auto;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  thead {
+    background: #f9f9f9;
+  }
+  
+  th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #e0e0e0;
+  }
+  
+  td {
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .spec-row td {
+    background: #fafafa;
+    font-size: 13px;
+    color: #666;
+  }
+  
+  tfoot tr {
+    font-weight: 600;
+  }
+  
+  .total-row {
+    background: #f9f9f9;
+  }
+  
+  .total-row td {
+    font-size: 16px;
+    color: var(--purple);
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .btn-primary {
+    background: var(--purple);
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background: var(--dark-purple);
+  }
+  
+  .btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+  }
+  
+  .btn-secondary:hover {
+    background: #e0e0e0;
+  }
+  
+  .text-muted {
+    color: #999;
+    font-style: italic;
+  }
+  
+  @media (max-width: 768px) {
+    .order-header-section {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    
+    .order-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    table {
+      font-size: 13px;
+    }
+    
+    th, td {
+      padding: 8px;
+    }
+  }
+</style>
+{% endblock %}

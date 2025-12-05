@@ -27,8 +27,8 @@
           <p class="stat-number">{{ user_counts.customers if user_counts is defined else 0 }}</p>
         </div>
         <div class="stat-card">
-          <h3>Staff</h3>
-          <p class="stat-number">{{ user_counts.staff if user_counts is defined else 0 }}</p>
+          <h3>Vendors</h3>
+          <p class="stat-number">{{ user_counts.vendors if user_counts is defined else 0 }}</p>
         </div>
         <div class="stat-card">
           <h3>Admins</h3>
@@ -51,8 +51,8 @@
               <td>{{ user_counts.customers if user_counts is defined else 0 }}</td>
             </tr>
             <tr>
-              <td>Staff</td>
-              <td>{{ user_counts.staff if user_counts is defined else 0 }}</td>
+              <td>Vendors</td>
+              <td>{{ user_counts.vendors if user_counts is defined else 0 }}</td>
             </tr>
             <tr>
               <td>Admins</td>
