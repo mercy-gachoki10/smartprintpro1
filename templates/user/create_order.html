@@ -137,14 +137,20 @@
   .file-info {
     display: none;
     margin-top: 12px;
-    padding: 12px;
-    background: #e7f3ff;
-    border-radius: 6px;
+    padding: 14px;
+    background: linear-gradient(135deg, #e7f3ff 0%, #f0f9ff 100%);
+    border-radius: 8px;
+    border-left: 4px solid #0369a1;
     font-size: 13px;
+    line-height: 1.6;
   }
 
   .file-info.visible {
     display: block;
+  }
+  
+  .file-info strong {
+    color: #0c4a6e;
   }
 
   .progress-bar {
@@ -267,13 +273,14 @@
   }
   
   .file-report {
-    background: #f0f9ff;
-    border: 1px solid #bae6fd;
-    border-radius: 8px;
-    padding: 16px;
-    margin-top: 12px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #0ea5e9;
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 16px;
     font-size: 13px;
     display: none;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);
   }
   
   .file-report.visible {
@@ -281,29 +288,48 @@
   }
   
   .file-report h4 {
-    margin: 0 0 10px;
-    color: var(--purple);
-    font-size: 14px;
+    margin: 0 0 14px;
+    color: #0369a1;
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   
   .file-report-row {
     display: flex;
     justify-content: space-between;
-    padding: 4px 0;
-    border-bottom: 1px solid #e0f2fe;
+    padding: 8px 0;
+    border-bottom: 1px solid #bae6fd;
   }
   
   .file-report-row:last-child {
     border-bottom: none;
+    padding-bottom: 0;
   }
   
   .file-report-label {
     font-weight: 600;
-    color: #334155;
+    color: #0c4a6e;
+    flex: 0 0 45%;
   }
   
   .file-report-value {
-    color: #64748b;
+    color: #0369a1;
+    text-align: right;
+    flex: 1;
+    font-weight: 500;
+  }
+  
+  .file-report-highlight {
+    background: #fef3c7;
+    border-left: 3px solid #f59e0b;
+    padding: 10px 12px;
+    margin-top: 10px;
+    border-radius: 6px;
+    color: #92400e;
+    font-size: 12px;
   }
 </style>
 
@@ -373,6 +399,7 @@
 </div>
 
 <script>
+  // @ts-nocheck
   const servicePrices = {{ services|tojson }};
   let itemCount = 0;
   const MAX_ITEMS = 5;
@@ -434,10 +461,10 @@
 
         '<div class="form-group">' +
           '<label for="' + itemId + '-file">Upload File (if required)</label>' +
-          '<input type="file" id="' + itemId + '-file" name="items[' + currentCount + '][file]" class="file-input" accept=".pdf,.docx,.png,.jpg,.jpeg" onchange="handleFileSelect(\'' + itemId + '\')">' +
+          '<input type="file" id="' + itemId + '-file" name="items[' + currentCount + '][file]" class="file-input" accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.gif,.bmp,.svg,.psd,.ai,.eps,.txt,.xlsx,.xls,.csv,.ppt,.pptx,.zip" onchange="handleFileSelect(\'' + itemId + '\')">' +
           '<div class="upload-area" id="' + itemId + '-upload" onclick="document.getElementById(\'' + itemId + '-file\').click()">' +
             '<div>📤 Click to upload file</div>' +
-            '<small style="color: #6b6b77; margin-top: 8px; display: block;">PDF, DOCX, PNG, JPG (Max 50MB)</small>' +
+            '<small style="color: #6b6b77; margin-top: 8px; display: block;">PDF, Word, Images, Design Files (Max 50MB)</small>' +
           '</div>' +
           '<div id="' + itemId + '-progress" class="progress-bar">' +
             '<div class="progress-fill"></div>' +
@@ -525,9 +552,52 @@
     const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
     const unitPrice = parseFloat(selectedOption && selectedOption.dataset && selectedOption.dataset.price ? selectedOption.dataset.price : 0);
     const quantity = parseInt(quantityInput.value) || 1;
-    const total = unitPrice * quantity;
-
-    priceDisplay.innerHTML = 'Estimated Price: <strong>KSh ' + total.toFixed(2) + '</strong>';
+    
+    // Get file analysis data if available
+    const fileAnalysis = window[`${itemId}_analysis`] || {};
+    let priceMultiplier = 1;
+    let priceAdjustments = [];
+    
+    // Apply pricing adjustments based on file analysis
+    if (fileAnalysis.pageCount) {
+      // For documents, multiply by page count
+      priceMultiplier = fileAnalysis.pageCount;
+      priceAdjustments.push(`${fileAnalysis.pageCount} pages`);
+    }
+    
+    if (fileAnalysis.isHighResolution) {
+      // High resolution images cost more for processing
+      priceMultiplier *= 1.2;
+      priceAdjustments.push('high-res +20%');
+    }
+    
+    if (fileAnalysis.isLowResolution) {
+      // Low resolution may need enhancement
+      priceMultiplier *= 1.1;
+      priceAdjustments.push('quality enhancement +10%');
+    }
+    
+    if (fileAnalysis.isImageRich) {
+      // Image-rich documents cost more
+      priceMultiplier *= 1.15;
+      priceAdjustments.push('image-rich +15%');
+    }
+    
+    if (fileAnalysis.requiresConversion) {
+      // Files needing conversion cost slightly more
+      priceMultiplier *= 1.05;
+      priceAdjustments.push('conversion +5%');
+    }
+    
+    const adjustedPrice = unitPrice * priceMultiplier;
+    const total = adjustedPrice * quantity;
+    
+    let priceHTML = 'Estimated Price: <strong>KSh ' + total.toFixed(2) + '</strong>';
+    if (priceAdjustments.length > 0) {
+      priceHTML += '<br><small style="color: #666; font-size: 12px;">Adjustments: ' + priceAdjustments.join(', ') + '</small>';
+    }
+    
+    priceDisplay.innerHTML = priceHTML;
     
     updateOrderTotal();
   }
@@ -544,7 +614,29 @@
       const unitPrice = parseFloat(selectedOption && selectedOption.dataset && selectedOption.dataset.price ? selectedOption.dataset.price : 0);
       const quantity = parseInt(quantityInput.value) || 1;
       
-      subtotal += (unitPrice * quantity);
+      // Get file analysis data if available
+      const fileAnalysis = window[`${itemId}_analysis`] || {};
+      let priceMultiplier = 1;
+      
+      // Apply same pricing adjustments as updatePrice
+      if (fileAnalysis.pageCount) {
+        priceMultiplier = fileAnalysis.pageCount;
+      }
+      if (fileAnalysis.isHighResolution) {
+        priceMultiplier *= 1.2;
+      }
+      if (fileAnalysis.isLowResolution) {
+        priceMultiplier *= 1.1;
+      }
+      if (fileAnalysis.isImageRich) {
+        priceMultiplier *= 1.15;
+      }
+      if (fileAnalysis.requiresConversion) {
+        priceMultiplier *= 1.05;
+      }
+      
+      const adjustedPrice = unitPrice * priceMultiplier;
+      subtotal += (adjustedPrice * quantity);
     });
 
     const total = BASE_FEE + subtotal;
@@ -592,13 +684,19 @@
 
     // Update upload area
     uploadArea.classList.add('has-file');
-    uploadArea.innerHTML = '<div>✅ ' + file.name + '</div><small style="color: #6b6b77;">' + (file.size / 1024 / 1024).toFixed(2) + ' MB</small>';
+    const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+    const fileTypeDisplay = file.name.split('.').pop().toUpperCase();
+    uploadArea.innerHTML = '<div>✅ ' + file.name + '</div><small style="color: #6b6b77;">' + fileSizeMB + ' MB • ' + fileTypeDisplay + ' File</small>';
     
-    // Show basic file info
+    // Show enhanced file info immediately
     fileInfo.classList.add('visible');
-    fileInfo.innerHTML = '<strong>File selected:</strong> ' + file.name + ' (' + (file.size / 1024).toFixed(2) + ' KB)';
+    const lastModified = new Date(file.lastModified).toLocaleDateString() + ' ' + new Date(file.lastModified).toLocaleTimeString();
+    fileInfo.innerHTML = '<strong>📎 File selected:</strong> ' + file.name + '<br>' +
+                        '<strong>Size:</strong> ' + formatFileSize(file.size) + ' • ' +
+                        '<strong>Type:</strong> ' + file.type + ' • ' +
+                        '<strong>Modified:</strong> ' + lastModified;
 
-    // Extract file attributes
+    // Extract detailed file attributes
     extractFileAttributes(file, itemId);
   }
 
@@ -606,23 +704,110 @@
     const reportDiv = document.getElementById(`${itemId}-report`);
     const fileType = file.name.split('.').pop().toLowerCase();
     
+    // Initialize analysis data for pricing
+    const analysisData = {
+      pageCount: 0,
+      isHighResolution: false,
+      isLowResolution: false,
+      isImageRich: false,
+      requiresConversion: false
+    };
+    
+    // Get file modification date
+    const lastModified = new Date(file.lastModified);
+    const formattedDate = lastModified.toLocaleDateString() + ' ' + lastModified.toLocaleTimeString();
+    
     let reportHTML = '<h4>📊 File Analysis Report</h4>';
     reportHTML += '<div class="file-report-row"><span class="file-report-label">File Name:</span><span class="file-report-value">' + file.name + '</span></div>';
-    reportHTML += '<div class="file-report-row"><span class="file-report-label">File Size:</span><span class="file-report-value">' + (file.size / 1024).toFixed(2) + ' KB</span></div>';
-    reportHTML += '<div class="file-report-row"><span class="file-report-label">File Type:</span><span class="file-report-value">' + fileType.toUpperCase() + '</span></div>';
+    reportHTML += '<div class="file-report-row"><span class="file-report-label">File Size:</span><span class="file-report-value">' + formatFileSize(file.size) + '</span></div>';
+    reportHTML += '<div class="file-report-row"><span class="file-report-label">File Type:</span><span class="file-report-value">' + fileType.toUpperCase() + ' (' + file.type + ')</span></div>';
+    reportHTML += '<div class="file-report-row"><span class="file-report-label">Last Modified:</span><span class="file-report-value">' + formattedDate + '</span></div>';
 
-    if (['png', 'jpg', 'jpeg'].includes(fileType)) {
-      // Extract image dimensions
+    if (['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'].includes(fileType)) {
+      // Extract image dimensions and metadata
       try {
         const img = new Image();
         const imageUrl = URL.createObjectURL(file);
         
         img.onload = function() {
-          reportHTML += '<div class="file-report-row"><span class="file-report-label">Width:</span><span class="file-report-value">' + img.width + ' px</span></div>';
-          reportHTML += '<div class="file-report-row"><span class="file-report-label">Height:</span><span class="file-report-value">' + img.height + ' px</span></div>';
-          reportHTML += '<div class="file-report-row"><span class="file-report-label">Dimensions:</span><span class="file-report-value">' + img.width + ' × ' + img.height + '</span></div>';
-          reportHTML += '<div class="file-report-row"><span class="file-report-label">Aspect Ratio:</span><span class="file-report-value">' + (img.width / img.height).toFixed(2) + ':1</span></div>';
+          const width = img.width;
+          const height = img.height;
+          const aspectRatio = (width / height).toFixed(2);
+          const megapixels = ((width * height) / 1000000).toFixed(2);
           
+          // Determine print sizes (assuming 300 DPI for high quality)
+          const printWidthInches = (width / 300).toFixed(2);
+          const printHeightInches = (height / 300).toFixed(2);
+          const printWidthCm = (width / 300 * 2.54).toFixed(1);
+          const printHeightCm = (height / 300 * 2.54).toFixed(1);
+          
+          // Determine orientation
+          const orientation = width > height ? '📐 Landscape' : width < height ? '📱 Portrait' : '⬜ Square';
+          
+          // Determine quality category based on dimensions
+          let quality = '⭐ Standard Quality';
+          let qualityNote = 'Suitable for screen display';
+          if (width >= 4000 && height >= 3000) {
+            quality = '🌟 Professional Quality';
+            qualityNote = 'Excellent for large format printing';
+            analysisData.isHighResolution = true;
+          } else if (width >= 3000 && height >= 3000) {
+            quality = '✨ High Resolution';
+            qualityNote = 'Great for poster-sized prints';
+            analysisData.isHighResolution = true;
+          } else if (width >= 1920 && height >= 1080) {
+            quality = '⭐ HD Quality';
+            qualityNote = 'Good for medium prints up to A4';
+          } else if (width < 800 || height < 600) {
+            quality = '⚠️ Low Resolution';
+            qualityNote = 'May appear pixelated when printed';
+            analysisData.isLowResolution = true;
+          }
+          
+          // Suggest DPI for different print sizes
+          let dpiRecommendation = '';
+          if (width < 1200 && height < 900) {
+            dpiRecommendation = '<div class="file-report-highlight">⚠️ <strong>Notice:</strong> This image may not print well at sizes larger than 4×6 inches. For better quality, use a higher resolution image.</div>';
+          } else if (width >= 3000) {
+            dpiRecommendation = '<div class="file-report-highlight" style="background: #d1fae5; border-left-color: #10b981; color: #064e3b;">✓ <strong>Excellent:</strong> This image has sufficient resolution for high-quality prints up to poster size!</div>';
+          }
+          
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">📏 Width:</span><span class="file-report-value">' + width.toLocaleString() + ' px</span></div>';
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">📏 Height:</span><span class="file-report-value">' + height.toLocaleString() + ' px</span></div>';
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">📐 Dimensions:</span><span class="file-report-value">' + width.toLocaleString() + ' × ' + height.toLocaleString() + ' pixels</span></div>';
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">🎯 Megapixels:</span><span class="file-report-value">' + megapixels + ' MP</span></div>';
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">📊 Aspect Ratio:</span><span class="file-report-value">' + aspectRatio + ':1</span></div>';
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">🔄 Orientation:</span><span class="file-report-value">' + orientation + '</span></div>';
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">✨ Quality:</span><span class="file-report-value">' + quality + '</span></div>';
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">📝 Best Use:</span><span class="file-report-value">' + qualityNote + '</span></div>';
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">🖨️ Print @ 300 DPI:</span><span class="file-report-value">' + printWidthInches + '" × ' + printHeightInches + '" (' + printWidthCm + ' × ' + printHeightCm + ' cm)</span></div>';
+          
+          // Calculate print size at 150 DPI for larger prints
+          const printWidth150 = (width / 150).toFixed(1);
+          const printHeight150 = (height / 150).toFixed(1);
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">🖼️ Print @ 150 DPI:</span><span class="file-report-value">' + printWidth150 + '" × ' + printHeight150 + '" (poster quality)</span></div>';
+          
+          // Suggest standard photo sizes
+          const standardSizes = suggestPhotoSizes(width, height);
+          if (standardSizes.length > 0) {
+            reportHTML += '<div class="file-report-row"><span class="file-report-label">📸 Recommended Sizes:</span><span class="file-report-value">' + standardSizes.join(', ') + '</span></div>';
+          }
+          
+          // Add quality recommendation box
+          reportHTML += dpiRecommendation;
+          
+          reportDiv.innerHTML = reportHTML;
+          reportDiv.classList.add('visible');
+          
+          // Store analysis data and update price
+          window[`${itemId}_analysis`] = analysisData;
+          updatePrice(itemId);
+          
+          URL.revokeObjectURL(imageUrl);
+        };
+        
+        img.onerror = function() {
+          reportHTML += '<div class="file-report-row"><span class="file-report-label">Note:</span><span class="file-report-value">Unable to analyze image properties</span></div>';
           reportDiv.innerHTML = reportHTML;
           reportDiv.classList.add('visible');
           URL.revokeObjectURL(imageUrl);
@@ -635,19 +820,171 @@
         reportDiv.classList.add('visible');
       }
     } else if (fileType === 'pdf') {
-      reportHTML += '<div class="file-report-row"><span class="file-report-label">Type:</span><span class="file-report-value">PDF Document</span></div>';
-      reportHTML += '<div class="file-report-row"><span class="file-report-label">Note:</span><span class="file-report-value">Page count will be analyzed by server</span></div>';
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">📄 Document Type:</span><span class="file-report-value">PDF Document</span></div>';
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">🏷️ MIME Type:</span><span class="file-report-value">' + file.type + '</span></div>';
+      
+      // Estimate page count based on file size (rough estimate: 50-100KB per page)
+      const estimatedPagesMin = Math.ceil(file.size / 100000);
+      const estimatedPagesMax = Math.ceil(file.size / 50000);
+      const estimatedPages = Math.ceil(file.size / 75000);
+      
+      // Store page count for pricing
+      analysisData.pageCount = estimatedPages;
+      
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">📑 Est. Page Count:</span><span class="file-report-value">~' + estimatedPages + ' page(s) (' + estimatedPagesMin + '-' + estimatedPagesMax + ' range)</span></div>';
+      
+      // Calculate estimated printing cost
+      const estimatedCost = estimatedPages * 5; // Assuming ~5 KSh per page
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">💰 Est. Print Cost:</span><span class="file-report-value">~KSh ' + estimatedCost.toLocaleString() + ' (B&W, single-sided)</span></div>';
+      
+      // File size per page indicator
+      const sizePerPage = (file.size / estimatedPages / 1024).toFixed(0);
+      let contentType = 'Text-heavy';
+      if (sizePerPage > 200) {
+        contentType = 'Image-rich (graphics/photos)';
+        analysisData.isImageRich = true;
+      } else if (sizePerPage > 100) {
+        contentType = 'Mixed (text & images)';
+      }
+      
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">📊 Content Type:</span><span class="file-report-value">' + contentType + '</span></div>';
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">📏 Avg Size/Page:</span><span class="file-report-value">' + sizePerPage + ' KB</span></div>';
+      
+      reportHTML += '<div class="file-report-highlight">ℹ️ <strong>Note:</strong> Exact page count and specifications will be determined after upload. Color pages may cost more.</div>';
+      
       reportDiv.innerHTML = reportHTML;
       reportDiv.classList.add('visible');
-    } else if (fileType === 'docx') {
-      reportHTML += '<div class="file-report-row"><span class="file-report-label">Type:</span><span class="file-report-value">Word Document</span></div>';
-      reportHTML += '<div class="file-report-row"><span class="file-report-label">Note:</span><span class="file-report-value">Content will be analyzed by server</span></div>';
+      
+      // Store analysis data and update price
+      window[`${itemId}_analysis`] = analysisData;
+      updatePrice(itemId);
+      
+    } else if (fileType === 'docx' || fileType === 'doc') {
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">📝 Document Type:</span><span class="file-report-value">Microsoft Word Document</span></div>';
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">🏷️ MIME Type:</span><span class="file-report-value">' + file.type + '</span></div>';
+      
+      // Estimate page count (Word docs typically 30-60KB per page)
+      const estimatedPagesMin = Math.ceil(file.size / 60000);
+      const estimatedPagesMax = Math.ceil(file.size / 30000);
+      const estimatedPages = Math.ceil(file.size / 45000);
+      
+      // Store page count and mark as requiring conversion
+      analysisData.pageCount = estimatedPages;
+      analysisData.requiresConversion = true;
+      
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">📑 Est. Page Count:</span><span class="file-report-value">~' + estimatedPages + ' page(s) (' + estimatedPagesMin + '-' + estimatedPagesMax + ' range)</span></div>';
+      
+      // Calculate estimated printing cost
+      const estimatedCost = estimatedPages * 5;
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">💰 Est. Print Cost:</span><span class="file-report-value">~KSh ' + estimatedCost.toLocaleString() + ' (after PDF conversion)</span></div>';
+      
+      // File complexity indicator
+      const sizePerPage = (file.size / estimatedPages / 1024).toFixed(0);
+      let complexity = 'Simple text';
+      if (sizePerPage > 150) complexity = 'Rich formatting (tables, images)';
+      else if (sizePerPage > 80) complexity = 'Moderate formatting';
+      
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">📊 Document Style:</span><span class="file-report-value">' + complexity + '</span></div>';
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">📏 Avg Size/Page:</span><span class="file-report-value">' + sizePerPage + ' KB</span></div>';
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">🔄 Processing:</span><span class="file-report-value">Will be converted to PDF format</span></div>';
+      
+      reportHTML += '<div class="file-report-highlight">ℹ️ <strong>Note:</strong> Document will be converted to PDF for printing. Ensure fonts and images are embedded properly.</div>';
+      
       reportDiv.innerHTML = reportHTML;
       reportDiv.classList.add('visible');
+      
+      // Store analysis data and update price
+      window[`${itemId}_analysis`] = analysisData;
+      updatePrice(itemId);
+      
     } else {
+      // Generic file type - try to provide useful information
+      reportHTML += '<div class="file-report-row"><span class="file-report-label">🏷️ MIME Type:</span><span class="file-report-value">' + (file.type || 'Unknown') + '</span></div>';
+      
+      // Check for specific file types and provide relevant info
+      if (fileType === 'svg') {
+        analysisData.requiresConversion = true;
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">📊 Vector Format:</span><span class="file-report-value">Scalable Vector Graphics</span></div>';
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">✨ Advantage:</span><span class="file-report-value">Can be scaled to any size without quality loss</span></div>';
+        reportHTML += '<div class="file-report-highlight" style="background: #d1fae5; border-left-color: #10b981; color: #064e3b;">✓ <strong>Perfect for:</strong> Logos, banners, and large format printing!</div>';
+      } else if (fileType === 'ai' || fileType === 'eps' || fileType === 'cdr') {
+        analysisData.requiresConversion = true;
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">🎨 Design File:</span><span class="file-report-value">Professional design format</span></div>';
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">💼 Software:</span><span class="file-report-value">' + (fileType === 'ai' ? 'Adobe Illustrator' : fileType === 'cdr' ? 'CorelDRAW' : 'PostScript') + '</span></div>';
+        reportHTML += '<div class="file-report-highlight">ℹ️ <strong>Note:</strong> This file requires specialized software to process. Vendor will review compatibility.</div>';
+      } else if (fileType === 'psd') {
+        analysisData.requiresConversion = true;
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">🎨 Design File:</span><span class="file-report-value">Adobe Photoshop Document</span></div>';
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">📐 Format:</span><span class="file-report-value">Layered image file</span></div>';
+        reportHTML += '<div class="file-report-highlight">ℹ️ <strong>Note:</strong> File may be flattened before printing. Ensure all layers are finalized.</div>';
+      } else if (fileType === 'txt') {
+        const estimatedChars = file.size;
+        const estimatedPages = Math.ceil(estimatedChars / 3000); // ~3000 chars per page
+        analysisData.pageCount = estimatedPages;
+        analysisData.requiresConversion = true;
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">📝 Text File:</span><span class="file-report-value">Plain text document</span></div>';
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">📏 Characters:</span><span class="file-report-value">~' + estimatedChars.toLocaleString() + '</span></div>';
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">📑 Est. Pages:</span><span class="file-report-value">~' + estimatedPages + ' (standard formatting)</span></div>';
+      } else if (fileType === 'zip' || fileType === 'rar' || fileType === '7z') {
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">📦 Archive File:</span><span class="file-report-value">Compressed folder</span></div>';
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">📂 Contains:</span><span class="file-report-value">Multiple files (will be extracted)</span></div>';
+        reportHTML += '<div class="file-report-highlight">ℹ️ <strong>Note:</strong> Archive will be extracted by vendor. Ensure all necessary files are included.</div>';
+      } else if (['xlsx', 'xls', 'csv'].includes(fileType)) {
+        analysisData.requiresConversion = true;
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">📊 Spreadsheet:</span><span class="file-report-value">' + (fileType === 'csv' ? 'CSV Data' : 'Excel Workbook') + '</span></div>';
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">🔄 Processing:</span><span class="file-report-value">Will be converted to PDF for printing</span></div>';
+        reportHTML += '<div class="file-report-highlight">⚠️ <strong>Notice:</strong> Ensure data fits page layout. Wide spreadsheets may need adjustment.</div>';
+      } else if (['ppt', 'pptx'].includes(fileType)) {
+        const estimatedSlides = Math.ceil(file.size / 100000);
+        analysisData.pageCount = estimatedSlides;
+        analysisData.requiresConversion = true;
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">📽️ Presentation:</span><span class="file-report-value">PowerPoint Slides</span></div>';
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">📑 Est. Slides:</span><span class="file-report-value">~' + estimatedSlides + '</span></div>';
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">🔄 Processing:</span><span class="file-report-value">Will be converted to PDF</span></div>';
+      } else {
+        reportHTML += '<div class="file-report-row"><span class="file-report-label">📋 Status:</span><span class="file-report-value">Custom file type</span></div>';
+        reportHTML += '<div class="file-report-highlight">ℹ️ <strong>Note:</strong> File will be reviewed by vendor to determine compatibility and printing requirements.</div>';
+      }
+      
       reportDiv.innerHTML = reportHTML;
       reportDiv.classList.add('visible');
+      
+      // Store analysis data and update price for all file types
+      window[`${itemId}_analysis`] = analysisData;
+      updatePrice(itemId);
     }
+  }
+  
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+  }
+  
+  function suggestPhotoSizes(width, height) {
+    const sizes = [];
+    const aspectRatio = width / height;
+    
+    // Standard photo sizes with their aspect ratios
+    const standards = [
+      { name: '4×6"', ratio: 1.5, minWidth: 1200 },
+      { name: '5×7"', ratio: 1.4, minWidth: 1500 },
+      { name: '8×10"', ratio: 1.25, minWidth: 2400 },
+      { name: '11×14"', ratio: 1.27, minWidth: 3300 },
+      { name: 'A4', ratio: 1.41, minWidth: 2480 },
+      { name: 'A3', ratio: 1.41, minWidth: 3508 },
+      { name: '16×20"', ratio: 1.25, minWidth: 4800 },
+      { name: 'Square (1:1)', ratio: 1.0, minWidth: 1000 }
+    ];
+    
+    standards.forEach(std => {
+      const ratioDiff = Math.abs(aspectRatio - std.ratio);
+      if (ratioDiff < 0.15 && width >= std.minWidth) {
+        sizes.push(std.name);
+      }
+    });
+    
+    return sizes;
   }
 
   document.getElementById('orderForm').addEventListener('submit', async function(e) {

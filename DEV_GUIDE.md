@@ -3,11 +3,13 @@
 ## Table of Contents
 1. [Setup Instructions](#setup-instructions)
 2. [Database Schema](#database-schema)
-3. [Vendor-Customer Workflow Implementation](#vendor-customer-workflow-implementation)
-4. [Testing Guide](#testing-guide)
-5. [API Routes](#api-routes)
-6. [Forms Reference](#forms-reference)
-7. [Troubleshooting](#troubleshooting)
+3. [Service Category Mapping](#service-category-mapping)
+4. [Payment System](#payment-system)
+5. [Vendor-Customer Workflow Implementation](#vendor-customer-workflow-implementation)
+6. [Testing Guide](#testing-guide)
+7. [API Routes](#api-routes)
+8. [Forms Reference](#forms-reference)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -297,6 +299,303 @@ Relationships:
 - customer → Customer
 - vendor → Vendor
 ```
+
+---
+
+## Service Category Mapping
+
+### Overview
+This section describes how vendor service flags map to database service categories in SmartPrintPro.
+
+### The Problem (Fixed)
+Previously, the code used hard-coded category names that didn't match the actual database categories:
+- Code used "Photo Printing" but database had "Pictures / Photos"
+- Code used "Large Format" but database had "Banners (Digital & Vinyl)"
+- Several categories like "Framing Options", "Signage", "Flyers & Brochures" weren't mapped at all
+
+This caused orders to be invisible to qualified vendors.
+
+### Current Mapping
+
+#### Vendor Service Flags → Database Categories
+
+| Vendor Flag | Database Service Categories |
+|-------------|---------------------------|
+| `service_document_printing` | • Document Printing<br>• Flyers & Brochures |
+| `service_photos` | • Pictures / Photos<br>• Framing Options |
+| `service_uniforms` | • Uniforms |
+| `service_merchandise` | • Custom Merchandise<br>• Packaging & Labels |
+| `service_large_format` | • Banners (Digital & Vinyl)<br>• Signage |
+
+### Helper Functions
+
+Two helper functions in `app.py` manage this mapping:
+
+#### 1. `get_vendor_service_categories(vendor)`
+Returns a list of database category names that a vendor can service based on their enabled service flags.
+
+**Example:**
+```python
+vendor = Vendor.query.filter_by(business_name='PrintPro Solutions').first()
+categories = get_vendor_service_categories(vendor)
+# Returns: ["Document Printing", "Flyers & Brochures", "Pictures / Photos", "Framing Options", ...]
+```
+
+#### 2. `vendor_can_service_order(vendor, order)`
+Returns True if the vendor can service the given order based on its service category.
+
+**Example:**
+```python
+order = Order.query.get(123)
+if vendor_can_service_order(current_user, order):
+    # Vendor can view/quote this order
+    pass
+```
+
+### Usage in Code
+
+#### Dashboard Filtering
+```python
+# OLD (broken):
+vendor_services = []
+if current_user.service_photos:
+    vendor_services.append("Photo Printing")  # Wrong!
+
+# NEW (working):
+vendor_services = get_vendor_service_categories(current_user)
+available_orders = Order.query.filter(
+    Order.service_category.in_(vendor_services),
+    Order.status == 'pending'
+).all()
+```
+
+#### Order Access Control
+```python
+# OLD (verbose):
+vendor_can_view = False
+if order.service_category in ["Pictures / Photos", "Framing Options"] and current_user.service_photos:
+    vendor_can_view = True
+# ... 5 more if statements ...
+
+# NEW (clean):
+vendor_can_view = (
+    order.vendor_id == current_user.id or 
+    vendor_can_service_order(current_user, order)
+)
+```
+
+### Database Service Categories
+
+All 9 service categories currently in the database:
+
+1. **Document Printing** - Standard printing services
+2. **Pictures / Photos** - Photo printing and processing
+3. **Framing Options** - Picture framing services
+4. **Uniforms** - Uniform printing and customization
+5. **Custom Merchandise** - Branded merchandise
+6. **Packaging & Labels** - Packaging materials and labels
+7. **Banners (Digital & Vinyl)** - Banner printing
+8. **Signage** - Sign creation and printing
+9. **Flyers & Brochures** - Marketing materials
+
+### Impact
+
+After this fix:
+- ✅ Photo/frame orders now visible to vendors with `service_photos=True`
+- ✅ All 9 service categories properly mapped
+- ✅ Orders correctly distributed to qualified vendors
+- ✅ Vendor dashboards show relevant available orders
+- ✅ Access control properly enforced on order detail pages
+
+---
+
+## Payment System
+
+### Overview
+SmartPrint Pro includes M-Pesa payment integration for processing customer payments.
+
+### Implementation Status
+
+#### Test Mode (Current)
+The system uses real M-Pesa STK Push API with sandbox credentials:
+- **Consumer Key:** ZLBe5S5AiBtTCuxn9QyEUL6hJd18A2oIvEz4P2wiPYezqNai
+- **Consumer Secret:** hCot1cjNpwVXZswzprmMwKrCXaYkga6DsqUvhZQg2rfVXkL4kz7xJ3OpIprIbe7y
+- **Business Short Code:** 174379
+- **Passkey:** Available in config.py
+- **API Endpoint:** `https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest`
+
+### Payment Flow
+
+#### Step 1: Order Completion
+When vendor marks order as delivered, customer sees payment interface on order detail page.
+
+#### Step 2: Payment Initiation
+1. Customer enters phone number (254XXXXXXXXX format)
+2. System generates OAuth token from Safaricom
+3. Creates Base64-encoded password: `base64(ShortCode + Passkey + Timestamp)`
+4. Sends STK Push request to M-Pesa API
+
+#### Step 3: STK Push Payload
+```python
+{
+    "BusinessShortCode": "174379",
+    "Password": "[Base64 encoded]",
+    "Timestamp": "YYYYMMDDHHmmss",
+    "TransactionType": "CustomerPayBillOnline",
+    "Amount": order.total_amount,
+    "PartyA": "254XXXXXXXXX",  # Customer phone
+    "PartyB": "174379",
+    "PhoneNumber": "254XXXXXXXXX",
+    "CallBackURL": "https://yourdomain.com/vendor/mpesa-callback",
+    "AccountReference": order.order_number,
+    "TransactionDesc": "SmartPrintPro Order Payment"
+}
+```
+
+#### Step 4: Customer Action
+- M-Pesa prompt appears on customer's phone
+- Customer enters M-Pesa PIN
+- Customer confirms payment
+
+#### Step 5: Manual Confirmation
+- Vendor receives payment confirmation from customer
+- Vendor clicks "Confirm Payment Received" button
+- System updates order status to completed
+- Payment status marked as paid
+
+### Key Functions
+
+#### `get_mpesa_access_token()` (app.py)
+Generates OAuth token for M-Pesa API authentication.
+
+```python
+def get_mpesa_access_token():
+    api_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+    response = requests.get(api_url, auth=HTTPBasicAuth(
+        current_app.config['MPESA_CONSUMER_KEY'],
+        current_app.config['MPESA_CONSUMER_SECRET']
+    ))
+    return response.json()['access_token']
+```
+
+#### `generate_mpesa_password()` (app.py)
+Creates Base64-encoded password for STK Push.
+
+```python
+def generate_mpesa_password():
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    passkey = current_app.config['MPESA_PASSKEY']
+    shortcode = current_app.config['MPESA_SHORTCODE']
+    password_str = f"{shortcode}{passkey}{timestamp}"
+    return base64.b64encode(password_str.encode()).decode('utf-8'), timestamp
+```
+
+#### `vendor_initiate_payment()` (app.py)
+Sends STK Push request to customer's phone.
+
+```python
+@app.route('/vendor/order/<int:order_id>/initiate-payment', methods=['POST'])
+@roles_required('vendor')
+def vendor_initiate_payment(order_id):
+    # Get OAuth token
+    access_token = get_mpesa_access_token()
+    
+    # Generate password
+    password, timestamp = generate_mpesa_password()
+    
+    # Send STK Push
+    api_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    
+    payload = {
+        "BusinessShortCode": config['MPESA_SHORTCODE'],
+        "Password": password,
+        "Timestamp": timestamp,
+        "TransactionType": "CustomerPayBillOnline",
+        "Amount": int(order.total_amount),
+        "PartyA": phone_number,
+        "PartyB": config['MPESA_SHORTCODE'],
+        "PhoneNumber": phone_number,
+        "CallBackURL": config['MPESA_CALLBACK_URL'],
+        "AccountReference": order.order_number,
+        "TransactionDesc": "SmartPrintPro Order Payment"
+    }
+    
+    response = requests.post(api_url, json=payload, headers=headers)
+    return jsonify(response.json())
+```
+
+### Security Considerations
+
+1. **API Credentials:** Stored in config.py, should be moved to environment variables in production
+2. **OAuth Tokens:** Generated dynamically for each request
+3. **Password Encoding:** Base64 encoding prevents plaintext passkey transmission
+4. **Phone Validation:** Frontend validates phone number format before submission
+5. **Order Verification:** Backend verifies vendor owns order before initiating payment
+
+### User Experience
+
+#### Customer View
+1. Order reaches "Delivered" status
+2. Payment section appears with amount and phone input
+3. Enters phone number
+4. Clicks "Initiate Payment"
+5. Receives M-Pesa prompt on phone
+6. Enters PIN and confirms
+7. Vendor confirms payment received
+8. Order marked as completed
+
+#### Vendor View
+1. Vendor marks order as delivered
+2. System prompts customer for payment
+3. Vendor waits for customer payment
+4. Vendor clicks "Confirm Payment Received" after verification
+5. Order status changes to completed
+
+### Testing
+
+#### Test Phone Numbers (Sandbox)
+- Test phone: 254708374149 (always succeeds)
+- Test phone: 254708374150 (always fails)
+
+#### Test Scenario
+```bash
+1. Create order as customer
+2. Vendor accepts and delivers order
+3. Enter test phone: 254708374149
+4. Click "Initiate Payment"
+5. Check M-Pesa prompt (if using real phone)
+6. Vendor confirms payment
+7. Verify order status: completed
+```
+
+### Future Enhancements
+
+1. **Callback Implementation**
+   - Receive automated payment confirmation from Safaricom
+   - Eliminate manual vendor confirmation step
+   - Auto-complete orders on successful payment
+
+2. **Production Migration**
+   - Switch to production API endpoints
+   - Update credentials to production keys
+   - Implement proper error handling and retries
+
+3. **Additional Payment Methods**
+   - Card payments (Stripe/PayPal)
+   - Bank transfers
+   - Cash on delivery
+
+4. **Payment Receipts**
+   - Email confirmation to customer
+   - PDF receipt generation
+   - SMS notifications
+
+### Related Files
+- `config.py` - M-Pesa credentials and configuration
+- `app.py` - Payment route handlers
+- `templates/vendor/order_detail.html` - Payment initiation UI
+- `sampledocs/Safaricom APIs.postman_collection (1).json` - API reference
 
 ---
 

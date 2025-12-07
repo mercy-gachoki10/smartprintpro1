@@ -16,6 +16,14 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # M-Pesa Configuration (Sandbox)
+    MPESA_ENVIRONMENT = os.getenv("MPESA_ENVIRONMENT", "sandbox")  # sandbox or production
+    MPESA_CONSUMER_KEY = os.getenv("MPESA_CONSUMER_KEY", "UnDvUCktXcQDyRScx0uAnJlA7rboMWhSnAxvhSOYQiX8QU0t")
+    MPESA_CONSUMER_SECRET = os.getenv("MPESA_CONSUMER_SECRET", "eP7nwvhM3OwL0nVhRlOCsGnRawPi32BkENmT33NygDpdYdq5sy1WyAshdCnidCkb")
+    MPESA_SHORTCODE = os.getenv("MPESA_SHORTCODE", "174379")
+    MPESA_PASSKEY = os.getenv("MPESA_PASSKEY", "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919")
+    MPESA_CALLBACK_URL = os.getenv("MPESA_CALLBACK_URL", "https://mydomain.com/mpesa/callback")
+    
     # Session security settings
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
@@ -35,6 +43,15 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
+
+
+class TestingConfig(Config):
+    """Configuration for testing environment."""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"  # In-memory database for tests
+    WTF_CSRF_ENABLED = False  # Disable CSRF for testing
+    SECRET_KEY = "test-secret-key"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 class ProductionConfig(Config):

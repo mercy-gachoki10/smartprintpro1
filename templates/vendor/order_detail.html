@@ -132,6 +132,41 @@
         <div class="processing-workflow">
           <h3 style="margin-bottom: 20px; color: var(--purple);">📋 Order Processing</h3>
           
+          <!-- Current Status Card -->
+          <div style="margin-bottom: 24px; padding: 16px; background: linear-gradient(135deg, #f5f3f8 0%, #faf9fc 100%); border-radius: 12px; border-left: 4px solid var(--purple);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 32px;">
+                {% if order.status == 'in_progress' %}📥
+                {% elif order.status == 'confirmed_received' %}✅
+                {% elif order.status == 'processing' %}🖨️
+                {% elif order.status == 'finished' %}✔️
+                {% elif order.status == 'quality_check' %}🔍
+                {% elif order.status == 'ready_dispatch' %}📦
+                {% elif order.status == 'dispatched' %}🚚
+                {% elif order.status == 'awaiting_payment' %}💰
+                {% elif order.status == 'completed' %}🎉
+                {% endif %}
+              </div>
+              <div>
+                <div style="font-weight: 700; font-size: 16px; color: var(--purple); margin-bottom: 4px;">
+                  {{ order.status.replace('_', ' ').title() }}
+                </div>
+                <div style="font-size: 13px; color: var(--muted);">
+                  {% if order.status == 'in_progress' %}Click below to confirm receipt and start processing
+                  {% elif order.status == 'confirmed_received' %}Ready to begin production
+                  {% elif order.status == 'processing' %}Order is being produced
+                  {% elif order.status == 'finished' %}Production completed, ready for QC
+                  {% elif order.status == 'quality_check' %}Performing quality inspection
+                  {% elif order.status == 'ready_dispatch' %}Packaged and ready to ship
+                  {% elif order.status == 'dispatched' %}Order sent to customer
+                  {% elif order.status == 'awaiting_payment' %}Delivered, waiting for payment
+                  {% elif order.status == 'completed' %}Order finalized and paid
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <!-- Progress Steps -->
           <div class="progress-steps">
             <div class="progress-step {% if order.status == 'in_progress' %}active{% elif order.status in ['confirmed_received', 'processing', 'finished', 'quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'] %}completed{% endif %}">
@@ -179,8 +214,8 @@
               {{ form.hidden_tag() }}
               <input type="hidden" name="new_status" value="confirmed_received"/>
               <div class="form-group">
-                <label for="notes">Confirmation Notes</label>
-                <textarea name="notes" id="notes" placeholder="e.g., Order received and verified..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+                <label for="notes">Notes (Optional)</label>
+                <textarea name="notes" id="notes" placeholder="Add any notes about receiving the order..." rows="2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
               </div>
               <button type="submit" class="btn btn-primary" style="width:100%;">✅ Confirm Order Received</button>
             </form>
@@ -191,8 +226,8 @@
               {{ form.hidden_tag() }}
               <input type="hidden" name="new_status" value="processing"/>
               <div class="form-group">
-                <label for="notes">Processing Notes</label>
-                <textarea name="notes" id="notes" placeholder="e.g., Started printing/production..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+                <label for="notes">Notes (Optional)</label>
+                <textarea name="notes" id="notes" placeholder="Add notes about starting production..." rows="2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
               </div>
               <button type="submit" class="btn btn-primary" style="width:100%;">🖨️ Start Processing</button>
             </form>
@@ -203,8 +238,8 @@
               {{ form.hidden_tag() }}
               <input type="hidden" name="new_status" value="finished"/>
               <div class="form-group">
-                <label for="notes">Completion Notes</label>
-                <textarea name="notes" id="notes" placeholder="e.g., Printing/production completed..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+                <label for="notes">Notes (Optional)</label>
+                <textarea name="notes" id="notes" placeholder="Add notes about completion..." rows="2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
               </div>
               <button type="submit" class="btn btn-success" style="width:100%;">✔️ Mark as Finished</button>
             </form>
@@ -215,10 +250,10 @@
               {{ form.hidden_tag() }}
               <input type="hidden" name="new_status" value="quality_check"/>
               <div class="form-group">
-                <label for="notes">Quality Check Notes</label>
-                <textarea name="notes" id="notes" placeholder="e.g., Quality checked, all specifications met..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+                <label for="notes">Notes (Optional)</label>
+                <textarea name="notes" id="notes" placeholder="Add quality check notes..." rows="2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
               </div>
-              <button type="submit" class="btn btn-primary" style="width:100%;">🔍 Perform Quality Check</button>
+              <button type="submit" class="btn btn-primary" style="width:100%;">🔍 Quality Check Complete</button>
             </form>
           </div>
           {% elif order.status == 'quality_check' %}
@@ -227,8 +262,8 @@
               {{ form.hidden_tag() }}
               <input type="hidden" name="new_status" value="ready_dispatch"/>
               <div class="form-group">
-                <label for="notes">Packaging Notes</label>
-                <textarea name="notes" id="notes" placeholder="e.g., Packaged and ready for dispatch..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+                <label for="notes">Notes (Optional)</label>
+                <textarea name="notes" id="notes" placeholder="Add packaging notes..." rows="2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
               </div>
               <button type="submit" class="btn btn-success" style="width:100%;">📦 Ready for Dispatch</button>
             </form>
@@ -239,8 +274,8 @@
               {{ form.hidden_tag() }}
               <input type="hidden" name="new_status" value="dispatched"/>
               <div class="form-group">
-                <label for="notes">Dispatch Details</label>
-                <textarea name="notes" id="notes" placeholder="e.g., Dispatched via courier, tracking number: XXX..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+                <label for="notes">Dispatch Details (Optional)</label>
+                <textarea name="notes" id="notes" placeholder="Add tracking number or courier details..." rows="2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
               </div>
               <button type="submit" class="btn btn-primary" style="width:100%;">🚚 Mark as Dispatched</button>
             </form>
@@ -251,30 +286,131 @@
               {{ form.hidden_tag() }}
               <input type="hidden" name="new_status" value="awaiting_payment"/>
               <div class="form-group">
-                <label for="notes">Delivery Confirmation</label>
-                <textarea name="notes" id="notes" placeholder="e.g., Delivered to customer, awaiting payment..." rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+                <label for="notes">Notes (Optional)</label>
+                <textarea name="notes" id="notes" placeholder="Confirm delivery details..." rows="2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
               </div>
-              <button type="submit" class="btn btn-warning" style="width:100%;">💰 Awaiting Payment</button>
+              <button type="submit" class="btn btn-warning" style="width:100%;">💰 Confirm Delivery - Awaiting Payment</button>
             </form>
           </div>
           {% elif order.status == 'awaiting_payment' %}
-          <div class="alert-warning" style="padding:16px; background:#fff3cd; border-radius:8px; margin-top:16px;">
-            <strong>💰 Awaiting Payment</strong><br>
-            Order delivered. Waiting for customer payment confirmation.
-            <form method="POST" action="{{ url_for('vendor_update_status', order_id=order.id) }}" style="margin-top:12px;">
-              {{ form.hidden_tag() }}
-              <input type="hidden" name="new_status" value="completed"/>
-              <div class="form-group">
-                <label for="notes">Payment Confirmation</label>
-                <textarea name="notes" id="notes" placeholder="e.g., Payment received via M-Pesa..." rows="2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+          <div class="status-update-section">
+            <div style="padding:16px; background:#fff3cd; border-radius:8px; margin-bottom:16px;">
+              <strong>💰 Send Payment Request</strong><br>
+              <p style="margin:8px 0; color:#856404;">Order has been delivered. Send M-Pesa payment request to customer's phone.</p>
+            </div>
+            
+            <!-- M-Pesa Payment Request Form -->
+            <div id="payment-form-section">
+              <div style="padding: 16px; background: linear-gradient(135deg, #1e5631 0%, #2d7a3f 100%); color: white; border-radius: 12px; margin-bottom: 20px;">
+                <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Amount to Request</div>
+                <div style="font-size: 36px; font-weight: 700; margin-bottom: 8px;">KSh {{ "{:,.2f}".format(order.total_amount) }}</div>
+                <div style="font-size: 13px; opacity: 0.85;">
+                  <div style="margin-bottom: 4px;"><strong>Customer:</strong> {{ order.customer.full_name }}</div>
+                  <div><strong>Order:</strong> {{ order.order_number }}</div>
+                </div>
               </div>
-              <button type="submit" class="btn btn-success" style="width:100%; margin-top:8px;">✅ Confirm Payment & Complete</button>
-            </form>
+
+              <form id="mpesa-payment-form" onsubmit="return initiatePayment(event);">
+                <div class="form-group" style="margin-bottom: 20px;">
+                  <label for="phone_number" style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">
+                    📱 Customer's M-Pesa Phone Number
+                  </label>
+                  <input 
+                    type="text" 
+                    id="phone_number" 
+                    name="phone_number" 
+                    placeholder="e.g., 254712345678" 
+                    value="{{ order.customer.phone if order.customer.phone else '' }}"
+                    pattern="254[0-9]{9}"
+                    required
+                    style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px;"
+                    oninput="validatePhoneNumber(this)"
+                  />
+                  <small style="color: var(--muted); display: block; margin-top: 6px;">
+                    Enter customer's M-Pesa number in format: 254XXXXXXXXX
+                  </small>
+                </div>
+
+                <button type="submit" class="btn btn-success" style="width: 100%; padding: 14px; font-size: 16px; font-weight: 600;">
+                  📲 Send Payment Request to Customer
+                </button>
+              </form>
+            </div>
+
+            <!-- Payment Processing Section (Hidden Initially) -->
+            <div id="payment-processing" style="display: none;">
+              <div style="text-align: center; padding: 30px;">
+                <div style="width: 80px; height: 80px; margin: 0 auto 20px; border: 4px solid #f3f3f3; border-top: 4px solid var(--purple); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                
+                <h3 style="color: var(--purple); margin-bottom: 12px;">⏳ Waiting for Customer Payment</h3>
+                <p style="color: var(--muted); margin-bottom: 20px;">
+                  Payment request sent to customer's phone<br>
+                  <strong id="payment-phone"></strong>
+                </p>
+                
+                <div style="padding: 16px; background: #fff3cd; border-radius: 8px; margin-bottom: 20px;">
+                  <div style="font-size: 14px; color: #856404; margin-bottom: 8px;">
+                    <strong>📱 Customer will:</strong>
+                  </div>
+                  <ol style="text-align: left; color: #856404; font-size: 13px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                    <li>Receive M-Pesa prompt on their phone</li>
+                    <li>Enter their M-Pesa PIN</li>
+                    <li>Confirm payment of KSh {{ "{:,.2f}".format(order.total_amount) }}</li>
+                  </ol>
+                </div>
+
+                <div style="padding: 16px; background: #d1ecf1; border-radius: 8px; margin-bottom: 20px;">
+                  <div style="font-size: 28px; font-weight: 700; color: #0c5460; margin-bottom: 4px;" id="countdown-timer">⏳</div>
+                  <div style="font-size: 13px; color: #0c5460;">Waiting for payment confirmation</div>
+                </div>
+
+                <p style="font-size: 12px; color: var(--muted);">
+                  <em>Customer will receive M-Pesa prompt on their phone. This typically takes 5-30 seconds.</em>
+                </p>
+                
+                <button onclick="manualConfirm()" class="btn btn-secondary" style="padding: 10px 20px; font-size: 14px; margin-top: 10px;">
+                  ✅ Manual Confirm (If Payment Received)
+                </button>
+              </div>
+            </div>
+
+            <!-- Payment Success Section (Hidden Initially) -->
+            <div id="payment-success" style="display: none;">
+              <div style="text-align: center; padding: 30px;">
+                <div style="width: 80px; height: 80px; margin: 0 auto 20px; background: #198754; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 48px; color: white;">
+                  ✓
+                </div>
+                
+                <h3 style="color: #198754; margin-bottom: 12px;">✅ Payment Received!</h3>
+                <p style="color: var(--muted); margin-bottom: 20px;">
+                  Customer payment of <strong>KSh {{ "{:,.2f}".format(order.total_amount) }}</strong> confirmed.
+                </p>
+                
+                <div style="padding: 16px; background: #d1e7dd; border-radius: 8px; margin-bottom: 20px;">
+                  <div style="font-size: 13px; color: #0f5132; line-height: 1.8;">
+                    <strong>Transaction Details:</strong><br>
+                    Reference: <span id="payment-reference"></span><br>
+                    Phone: <span id="payment-phone-display"></span><br>
+                    Order: {{ order.order_number }}<br>
+                    Customer: {{ order.customer.full_name }}
+                  </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('vendor_confirm_payment', order_id=order.id) }}">
+                  {{ form.hidden_tag() }}
+                  <input type="hidden" name="payment_reference" id="payment_reference_input" value="">
+                  <input type="hidden" name="phone_number" id="phone_number_input" value="">
+                  <button type="submit" class="btn btn-success" style="width: 100%; padding: 14px; font-size: 16px; font-weight: 600;">
+                    ✅ Complete Order
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
           {% elif order.status == 'completed' %}
           <div class="alert-success" style="padding:16px; background:#d1e7dd; border-radius:8px; margin-top:16px;">
             <strong>🎉 Order Completed!</strong><br>
-            Payment received and order finalized.
+            Payment received and order finalized. Well done!
           </div>
           {% endif %}
 
@@ -298,6 +434,26 @@
             </div>
             {% endif %}
           {% endfor %}
+          
+          <!-- Order History -->
+          {% if order.status_history %}
+          <div style="margin-top: 32px; padding-top: 24px; border-top: 2px solid #e8e6f2;">
+            <h3 style="margin-bottom: 16px; color: var(--purple);">📋 Order History</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              {% for history in order.status_history|reverse %}
+              <div style="padding: 12px; background: white; border-radius: 8px; border-left: 4px solid {% if history.changed_by_type == 'vendor' %}var(--purple){% else %}#6b6b77{% endif %};">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
+                  <div style="font-weight: 600; color: #333;">{{ history.new_status.replace('_', ' ').title() }}</div>
+                  <div style="font-size: 12px; color: var(--muted);">{{ history.created_at.strftime('%b %d, %I:%M %p') }}</div>
+                </div>
+                {% if history.notes %}
+                <div style="font-size: 14px; color: #6b6b77; margin-top: 4px;">{{ history.notes }}</div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
         </div>
       {% elif order.is_quote_deadline_passed %}
         <p class="text-muted">The quote deadline has passed.</p>
@@ -309,6 +465,11 @@
 </section>
 
 <style>
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
   .order-detail-container {
     max-width: 1200px;
     margin: 40px auto;
@@ -603,4 +764,113 @@
     }
   }
 </style>
+
+<script>
+function validatePhoneNumber(input) {
+  // Remove any non-digit characters
+  let value = input.value.replace(/\D/g, '');
+  
+  // Ensure it starts with 254
+  if (value.length > 0 && !value.startsWith('254')) {
+    if (value.startsWith('0')) {
+      value = '254' + value.substring(1);
+    } else if (value.startsWith('7') || value.startsWith('1')) {
+      value = '254' + value;
+    }
+  }
+  
+  // Limit to 12 digits
+  if (value.length > 12) {
+    value = value.substring(0, 12);
+  }
+  
+  input.value = value;
+}
+
+function initiatePayment(event) {
+  event.preventDefault();
+  
+  const phoneNumber = document.getElementById('phone_number').value;
+  
+  // Validate phone number format
+  if (!/^254[0-9]{9}$/.test(phoneNumber)) {
+    alert('Please enter a valid phone number in format: 254XXXXXXXXX');
+    return false;
+  }
+  
+  // Store phone number for later
+  document.getElementById('phone_number_input').value = phoneNumber;
+  
+  // Hide form, show processing
+  document.getElementById('payment-form-section').style.display = 'none';
+  document.getElementById('payment-processing').style.display = 'block';
+  
+  // Display phone number
+  document.getElementById('payment-phone').textContent = phoneNumber;
+  
+  // Call backend to initiate STK Push
+  fetch('{{ url_for("vendor_initiate_payment", order_id=order.id) }}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'{% if form.csrf_token %},
+      'X-CSRFToken': '{{ form.csrf_token._value() }}'{% endif %}
+    },
+    body: JSON.stringify({ phone_number: phoneNumber })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // STK Push sent successfully - start monitoring
+      document.getElementById('countdown-timer').textContent = '⏳';
+      document.querySelector('#payment-processing p').innerHTML = 
+        'Payment request sent to customer\'s phone<br><strong>' + phoneNumber + '</strong><br><em>Waiting for customer to complete payment...</em>';
+      
+      // Store checkout request ID
+      window.checkoutRequestId = data.checkout_request_id;
+      
+      // In production, you would poll the backend to check payment status
+      // For now, we'll use a 60-second timeout
+      setTimeout(() => {
+        // In production, check actual payment status via callback
+        // For testing, you can manually confirm payment
+        alert('Payment timeout. Please check if customer completed payment and confirm manually.');
+      }, 60000);
+      
+    } else {
+      // Error sending STK Push
+      alert('Error: ' + data.message);
+      document.getElementById('payment-processing').style.display = 'none';
+      document.getElementById('payment-form-section').style.display = 'block';
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Failed to send payment request. Please try again.');
+    document.getElementById('payment-processing').style.display = 'none';
+    document.getElementById('payment-form-section').style.display = 'block';
+  });
+  
+  return false;
+}
+
+function manualConfirm() {
+  const phoneNumber = document.getElementById('phone_number_input').value;
+  const reference = prompt('Enter M-Pesa transaction code (e.g., SH12XYZ9AB):');
+  
+  if (reference && reference.trim()) {
+    completePayment(phoneNumber, reference.trim());
+  }
+}
+
+function completePayment(phoneNumber, reference) {
+  // Store reference
+  document.getElementById('payment-reference').textContent = reference || 'MANUAL_CONFIRM';
+  document.getElementById('payment_reference_input').value = reference || 'MANUAL_CONFIRM';
+  document.getElementById('payment-phone-display').textContent = phoneNumber;
+  
+  // Hide processing, show success
+  document.getElementById('payment-processing').style.display = 'none';
+  document.getElementById('payment-success').style.display = 'block';
+}
+</script>
 {% endblock %}

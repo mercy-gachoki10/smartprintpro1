@@ -587,42 +587,92 @@
   <div class="content-grid">
     <!-- Left Column -->
     <div>
-      <!-- Items Card -->
+      <!-- Order Details Card -->
       <div class="card">
+        <h2>📋 Order Details</h2>
+        <div class="info-row">
+          <span class="info-label">Order Number</span>
+          <span class="info-value">{{ order.order_number }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Service Category</span>
+          <span class="info-value">{{ order.service_category }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Order Status</span>
+          <span class="info-value">
+            <span class="status-badge status-{{ order.status }}" style="padding: 4px 12px; font-size: 12px;">
+              {{ order.status.replace('_', ' ').title() }}
+            </span>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Created Date</span>
+          <span class="info-value">{{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+        </div>
+        {% if order.vendor_id %}
+        <div class="info-row">
+          <span class="info-label">Assigned Vendor</span>
+          <span class="info-value">{{ order.vendor.business_name }}</span>
+        </div>
+        {% endif %}
+        {% if order.customer_notes %}
+        <div style="margin-top: 16px; padding: 12px; background: #f5f3f8; border-radius: 8px; border-left: 4px solid var(--purple);">
+          <strong style="display: block; margin-bottom: 8px; color: var(--purple);">📝 Your Notes:</strong>
+          <div style="color: #333; font-size: 14px;">{{ order.customer_notes }}</div>
+        </div>
+        {% endif %}
+      </div>
+      
+      <!-- Items Card -->
+      <div class="card" style="margin-top: 24px;">
         <h2>📦 Order Items</h2>
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Quantity</th>
-              <th>Price</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for item in order.order_items %}
-            <tr>
-              <td>
-                <strong>{{ item.service_name }}</strong>
-                <div class="spec-row">
-                  {% if item.paper_size %}<span class="spec-badge">📏 {{ item.paper_size }}</span>{% endif %}
-                  {% if item.color_option %}<span class="spec-badge">🎨 {{ item.color_option }}</span>{% endif %}
-                  {% if item.binding_type %}<span class="spec-badge">📚 {{ item.binding_type }}</span>{% endif %}
-                  {% if item.paper_type %}<span class="spec-badge">📄 {{ item.paper_type }}</span>{% endif %}
-                </div>
-                {% if item.file_name %}
-                <div style="margin-top:8px;font-size:13px;color:var(--muted);">
-                  📎 {{ item.file_name }}
-                </div>
-                {% endif %}
-              </td>
-              <td>{{ item.quantity }}</td>
-              <td>KSh {{ "%.2f"|format(item.unit_price) }}</td>
-              <td><strong>KSh {{ "%.2f"|format(item.total_price) }}</strong></td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        {% for item in order.order_items %}
+        <div style="padding: 20px; background: #faf9fc; border-radius: 12px; margin-bottom: 16px; border: 2px solid #e8e6f2;">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+            <div>
+              <h3 style="margin: 0 0 8px; color: var(--purple); font-size: 18px;">{{ item.service_category }}</h3>
+              <div style="font-size: 15px; color: #6b6b77; font-weight: 500;">{{ item.service_type }}</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 13px; color: var(--muted); margin-bottom: 4px;">Quantity</div>
+              <div style="font-size: 20px; font-weight: 700; color: var(--purple);">{{ item.quantity }}</div>
+            </div>
+          </div>
+          
+          {% if item.specifications %}
+          <div style="margin-bottom: 12px; padding: 12px; background: white; border-radius: 8px;">
+            <strong style="display: block; margin-bottom: 6px; color: #333; font-size: 13px;">📋 Specifications:</strong>
+            <div style="color: #6b6b77; font-size: 14px; line-height: 1.6;">{{ item.specifications }}</div>
+          </div>
+          {% endif %}
+          
+          {% if item.file_name %}
+          <div style="margin-bottom: 12px; padding: 12px; background: white; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong style="display: block; margin-bottom: 4px; color: #333; font-size: 13px;">📎 Attached File:</strong>
+              <div style="color: #6b6b77; font-size: 14px;">{{ item.file_name }}</div>
+              {% if item.file_size %}
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">
+                Size: {{ "%.2f"|format(item.file_size / 1024) }} KB
+                {% if item.page_count %} • {{ item.page_count }} pages{% endif %}
+              </div>
+              {% endif %}
+            </div>
+            <a href="{{ url_for('download_order_file', order_id=order.id, item_id=item.id) }}" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;">
+              Download
+            </a>
+          </div>
+          {% endif %}
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 2px solid #e8e6f2;">
+            <span style="color: var(--muted); font-size: 14px;">Unit Price: KSh {{ "%.2f"|format(item.unit_price) }}</span>
+            <span style="font-size: 18px; font-weight: 700; color: var(--purple);">
+              Total: KSh {{ "%.2f"|format(item.total_price) }}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
 
         <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e8e6f2;">
           <div class="info-row">
@@ -933,20 +983,82 @@
       </div>
       {% endif %}
 
-      <!-- Actions Card -->
-      {% if order.status == 'dispatched' %}
+      <!-- Payment Status for Customer (Read-Only) -->
+      {% if order.status == 'awaiting_payment' and order.vendor %}
       <div class="card" style="margin-top: 24px;">
-        <h2>📦 Delivery Confirmation</h2>
-        <p style="color: var(--muted); margin-bottom: 16px;">Have you received your order?</p>
-        <form method="POST" action="{{ url_for('customer_confirm_receipt', order_id=order.id) }}">
-          {{ form.hidden_tag() }}
-          <button type="submit" class="btn btn-success" style="width: 100%;">✓ Confirm Receipt</button>
-        </form>
+        <h2>💰 Payment Pending</h2>
+        <div style="padding: 20px; background: linear-gradient(135deg, #fff3cd 0%, #fef9e7 100%); border-radius: 12px; border-left: 4px solid #ffc107;">
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+            <div style="font-size: 48px;">⏳</div>
+            <div>
+              <h3 style="margin: 0 0 8px 0; color: #856404;">Awaiting Payment Confirmation</h3>
+              <p style="margin: 0; color: #856404; font-size: 14px;">Your order has been delivered. The vendor will send you a payment request shortly.</p>
+            </div>
+          </div>
+          
+          <div style="padding: 16px; background: white; border-radius: 8px; margin-bottom: 16px;">
+            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">Amount to Pay</div>
+            <div style="font-size: 32px; font-weight: 700; color: var(--purple); margin-bottom: 12px;">KSh {{ "{:,.2f}".format(order.total_amount) }}</div>
+            <div style="font-size: 13px; color: #666;">
+              <div style="margin-bottom: 4px;"><strong>Business:</strong> SmartPrint Pro</div>
+              <div><strong>Vendor:</strong> {{ order.vendor.business_name }}</div>
+            </div>
+          </div>
+
+          <div style="padding: 16px; background: #e7f3ff; border-radius: 8px;">
+            <div style="font-weight: 600; margin-bottom: 8px; color: #0c5460;">📱 What happens next:</div>
+            <ol style="margin: 0; padding-left: 20px; color: #0c5460; font-size: 13px; line-height: 1.8;">
+              <li>Vendor will send M-Pesa payment request to your phone</li>
+              <li>You'll receive a prompt on your phone</li>
+              <li>Enter your M-Pesa PIN to complete payment</li>
+              <li>Order will be automatically completed</li>
+            </ol>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px; background: #f5f3f8; border-radius: 8px;">
+          <div style="font-weight: 600; margin-bottom: 4px;">Need Help?</div>
+          <div style="font-size: 13px; color: #666;">
+            Contact vendor: <strong>{{ order.vendor.phone }}</strong>
+          </div>
+        </div>
+      </div>
+      {% elif order.status == 'dispatched' and order.vendor %}
+      <div class="card" style="margin-top: 24px;">
+        <h2>📞 Order Dispatched</h2>
+        <p style="color: var(--muted); margin-bottom: 16px;">
+          Your order has been dispatched. The vendor will update the status once delivery is confirmed.
+        </p>
+        <div style="padding: 16px; background: #f5f3f8; border-radius: 8px;">
+          <div style="margin-bottom: 8px;"><strong>Vendor:</strong> {{ order.vendor.business_name }}</div>
+          <div style="margin-bottom: 8px;"><strong>Phone:</strong> {{ order.vendor.phone }}</div>
+          <div><strong>Email:</strong> {{ order.vendor.email }}</div>
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- Order Complete -->
+      {% if order.status == 'completed' %}
+      <div class="card" style="margin-top: 24px;">
+        <h2>🎉 Order Completed!</h2>
+        <p style="color: var(--muted); margin-bottom: 16px;">
+          Your order has been completed and payment has been processed. Thank you for your business!
+        </p>
+        {% if not order.review %}
+        <a href="#" class="btn btn-primary" style="width: 100%;">Leave a Review</a>
+        {% endif %}
       </div>
       {% endif %}
     </div>
   </div>
 </div>
+
+<style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
 
 <script>
 function toggleRejectForm(quoteId) {

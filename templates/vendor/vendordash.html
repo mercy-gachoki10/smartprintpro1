@@ -5,27 +5,28 @@
 {% block content %}
 <section class="vendor-dashboard">
   <div class="dashboard-header">
-    <div>
-      <h1>Welcome, {{ user.business_name or user.full_name }}!</h1>
-      <p class="subtitle">Manage your print orders and quotes</p>
+    <div class="welcome-section">
+      <h1>Welcome back, {{ user.business_name or user.full_name }}! 👋</h1>
+      <p class="subtitle">Manage your print jobs, upload new documents, and track your orders all in one place.</p>
     </div>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-number">{{ stats.available }}</div>
-        <div class="stat-label">Available Orders</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">{{ stats.in_progress }}</div>
-        <div class="stat-label">In Progress</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">{{ stats.completed_this_month }}</div>
-        <div class="stat-label">This Month</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">{{ "%.1f"|format(stats.average_rating) if stats.average_rating else 'N/A' }}</div>
-        <div class="stat-label">Avg Rating</div>
-      </div>
+  </div>
+  
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-number">{{ stats.available }}</div>
+      <div class="stat-label">Available Orders</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ stats.in_progress }}</div>
+      <div class="stat-label">Active Orders</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ stats.completed_this_month }}</div>
+      <div class="stat-label">This Month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ "%.1f"|format(stats.average_rating) if stats.average_rating else 'N/A' }}</div>
+      <div class="stat-label">Avg Rating</div>
     </div>
   </div>
 
@@ -249,45 +250,55 @@
   .dashboard-header {
     background: linear-gradient(135deg, var(--purple), var(--dark-purple));
     color: white;
-    padding: 40px;
+    padding: 32px 40px;
     border-radius: 16px;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
   }
   
-  .dashboard-header h1 {
-    font-size: 32px;
+  .welcome-section h1 {
+    font-size: 28px;
     margin: 0 0 8px 0;
+    color: white;
+    font-weight: 700;
   }
   
   .subtitle {
-    opacity: 0.9;
-    margin: 0 0 24px 0;
+    opacity: 0.95;
+    margin: 0;
+    color: white;
+    font-size: 15px;
+    line-height: 1.5;
   }
   
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 16px;
-    margin-top: 24px;
+    margin-bottom: 30px;
   }
   
   .stat-card {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
     padding: 20px;
     border-radius: 12px;
     text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
   
   .stat-number {
     font-size: 36px;
     font-weight: 700;
     margin-bottom: 8px;
+    color: var(--purple);
+    line-height: 1;
   }
   
   .stat-label {
     font-size: 14px;
-    opacity: 0.9;
+    color: #666;
+    font-weight: 500;
+    line-height: 1.4;
   }
   
   .tabs {
@@ -405,6 +416,13 @@
   .badge-completed {
     background: #f3e5f5;
     color: #7b1fa2;
+  }
+  
+  .badge-in_progress, .badge-confirmed_received, .badge-processing,
+  .badge-finished, .badge-quality_check, .badge-ready_dispatch,
+  .badge-dispatched, .badge-awaiting_payment {
+    background: #fff3e0;
+    color: #f57c00;
   }
   
   .order-info {

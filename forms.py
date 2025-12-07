@@ -123,9 +123,61 @@ class RegistrationForm(FlaskForm):
         if self.user_type.data == "vendor":
             business_name = (self.business_name.data or "").strip()
             
-            # Convert services list to comma-separated string
+            # Get selected services from form
             services_list = self.services_offered.data if self.services_offered.data else []
-            services_str = ",".join(services_list) if services_list else None
+            
+            # Map form field values to human-readable names for services_offered string
+            service_name_mapping = {
+                "document_printing": "Document Printing",
+                "photo_printing": "Photo Printing",
+                "large_format": "Large Format Printing",
+                "banners_signage": "Banners & Signage",
+                "business_cards": "Business Cards",
+                "flyers_brochures": "Flyers & Brochures",
+                "booklets": "Booklets & Binding",
+                "custom_merchandise": "Custom Merchandise",
+                "tshirts_uniforms": "T-Shirts & Uniforms",
+                "mugs_gifts": "Mugs & Gifts",
+                "stickers_labels": "Stickers & Labels",
+                "canvas_framing": "Canvas & Framing",
+                "design_services": "Design Services",
+                "lamination": "Lamination",
+                "scanning": "Scanning & Digitization",
+            }
+            
+            # Build human-readable services string
+            service_names = [service_name_mapping.get(s, s) for s in services_list]
+            services_str = ", ".join(service_names) if service_names else None
+            
+            # Map form field values to business type display name
+            business_type_mapping = {
+                "print_shop": "Print Shop",
+                "copy_center": "Copy Center",
+                "design_studio": "Design & Print Studio",
+                "signage": "Signage & Banners",
+                "merchandise": "Merchandise & Branding",
+                "other": "Other"
+            }
+            business_type_display = business_type_mapping.get(
+                (self.business_type.data or "").strip(), 
+                (self.business_type.data or "").strip()
+            ) if self.business_type.data else None
+            
+            # Set service category flags based on selected services
+            # These flags are used for order matching
+            service_document_printing = any(s in services_list for s in [
+                "document_printing", "flyers_brochures", "booklets", "business_cards"
+            ])
+            service_photos = any(s in services_list for s in [
+                "photo_printing", "canvas_framing"
+            ])
+            service_uniforms = "tshirts_uniforms" in services_list
+            service_merchandise = any(s in services_list for s in [
+                "custom_merchandise", "mugs_gifts", "stickers_labels"
+            ])
+            service_large_format = any(s in services_list for s in [
+                "large_format", "banners_signage"
+            ])
             
             user = model(
                 full_name=business_name,  # Use business name as full name
@@ -134,9 +186,15 @@ class RegistrationForm(FlaskForm):
                 organization=None,  # Vendors don't use organization field
                 business_name=business_name,
                 business_address=(self.business_address.data or "").strip() or None,
-                business_type=(self.business_type.data or "").strip() or None,
+                business_type=business_type_display,
                 services_offered=services_str,
                 tax_id=(self.tax_id.data or "").strip() or None,
+                # Set service flags for order matching
+                service_document_printing=service_document_printing,
+                service_photos=service_photos,
+                service_uniforms=service_uniforms,
+                service_merchandise=service_merchandise,
+                service_large_format=service_large_format,
             )
         else:
             # For customers, use traditional fields

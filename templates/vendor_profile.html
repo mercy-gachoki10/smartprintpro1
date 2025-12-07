@@ -1,0 +1,584 @@
+{% extends "base.html" %}
+
+{% block title %}{{ vendor.business_name }} — SmartPrint Pro{% endblock %}
+
+{% block content %}
+<div class="vendor-profile-container">
+  <!-- Header Section -->
+  <div class="vendor-header">
+    <div class="vendor-header-content">
+      <div class="vendor-avatar">
+        {{ vendor.business_name[:2].upper() }}
+      </div>
+      <div class="vendor-info">
+        <h1>{{ vendor.business_name }}</h1>
+        <div class="vendor-meta">
+          <span class="meta-item">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+            </svg>
+            {{ vendor.business_address if vendor.business_address else 'Kenya' }}
+          </span>
+          <span class="meta-item">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
+              <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+            </svg>
+            Member since {{ vendor.created_at.strftime('%B %Y') }}
+          </span>
+        </div>
+      </div>
+      <div class="vendor-rating-summary">
+        <div class="rating-number">{{ "%.1f"|format(avg_rating) if avg_rating else 'N/A' }}</div>
+        <div class="rating-stars">
+          {% for i in range(1, 6) %}
+            <span class="star {% if i <= avg_rating|round %}filled{% endif %}">★</span>
+          {% endfor %}
+        </div>
+        <div class="rating-count">{{ review_count }} review{{ 's' if review_count != 1 else '' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="vendor-content">
+    <!-- Left Column -->
+    <div class="vendor-main">
+      <!-- About Section -->
+      <div class="section-card">
+        <h2>About</h2>
+        <div class="about-content">
+          {% if vendor.organization %}
+          <p><strong>Organization:</strong> {{ vendor.organization }}</p>
+          {% endif %}
+          
+          <div class="services-offered">
+            <strong>Services Offered:</strong>
+            <div class="service-tags">
+              {% for service in services %}
+              <span class="service-tag">{{ service }}</span>
+              {% endfor %}
+              {% if not services %}
+              <span class="service-tag">General Printing</span>
+              {% endif %}
+            </div>
+          </div>
+          
+          {% if vendor.business_type %}
+          <p><strong>Business Type:</strong> {{ vendor.business_type }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Reviews Section -->
+      <div class="section-card">
+        <h2>Customer Reviews</h2>
+        
+        {% if reviews %}
+          <!-- Rating Distribution -->
+          <div class="rating-distribution">
+            {% for rating in [5, 4, 3, 2, 1] %}
+            <div class="rating-bar-row">
+              <span class="rating-label">{{ rating }} ★</span>
+              <div class="rating-bar">
+                <div class="rating-bar-fill" style="width: {{ (rating_counts[rating] / review_count * 100)|round if review_count > 0 else 0 }}%"></div>
+              </div>
+              <span class="rating-count-label">{{ rating_counts[rating] }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Individual Reviews -->
+          <div class="reviews-list">
+            {% for review in reviews %}
+            <div class="review-card">
+              <div class="review-header">
+                <div class="reviewer-info">
+                  <div class="reviewer-avatar">{{ review.customer.full_name[:1].upper() }}</div>
+                  <div>
+                    <div class="reviewer-name">{{ review.customer.full_name }}</div>
+                    <div class="review-date">{{ review.created_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+                  </div>
+                </div>
+                <div class="review-rating">
+                  {% for i in range(1, 6) %}
+                    <span class="star {% if i <= review.rating %}filled{% endif %}">★</span>
+                  {% endfor %}
+                </div>
+              </div>
+              {% if review.comment %}
+              <div class="review-comment">
+                {{ review.comment }}
+              </div>
+              {% endif %}
+              <div class="review-meta">
+                <span>Order: {{ review.order.order_number }}</span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-reviews">
+            <p>No reviews yet. Be the first to work with this vendor!</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="vendor-sidebar">
+      <!-- Stats Card -->
+      <div class="sidebar-card">
+        <h3>Statistics</h3>
+        <div class="stat-row">
+          <span class="stat-label">Completed Orders</span>
+          <span class="stat-value">{{ completed_orders }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Active Orders</span>
+          <span class="stat-value">{{ in_progress_orders }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Average Rating</span>
+          <span class="stat-value">{{ "%.1f"|format(avg_rating) if avg_rating else 'N/A' }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Total Reviews</span>
+          <span class="stat-value">{{ review_count }}</span>
+        </div>
+      </div>
+
+      <!-- Contact Card -->
+      <div class="sidebar-card">
+        <h3>Contact Information</h3>
+        <div class="contact-info">
+          <div class="contact-row">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/>
+            </svg>
+            <span>{{ vendor.email }}</span>
+          </div>
+          <div class="contact-row">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328z"/>
+            </svg>
+            <span>{{ vendor.phone }}</span>
+          </div>
+        </div>
+        
+        {% if current_user.is_authenticated and current_user.user_type == 'customer' %}
+        <a href="{{ url_for('create_order') }}" class="btn btn-primary btn-block">Create Order</a>
+        {% else %}
+        <button class="btn btn-primary btn-block" onclick="alert('Email: {{ vendor.email }}\nPhone: {{ vendor.phone }}')">Contact Vendor</button>
+        {% endif %}
+      </div>
+
+      <!-- Badges Card -->
+      {% if completed_orders > 100 or avg_rating >= 4.5 %}
+      <div class="sidebar-card">
+        <h3>Achievements</h3>
+        <div class="badges">
+          {% if completed_orders > 200 %}
+          <div class="badge-item">
+            <span class="badge-icon">🏆</span>
+            <div>
+              <div class="badge-title">Top Performer</div>
+              <div class="badge-desc">200+ completed orders</div>
+            </div>
+          </div>
+          {% elif completed_orders > 100 %}
+          <div class="badge-item">
+            <span class="badge-icon">⭐</span>
+            <div>
+              <div class="badge-title">Experienced</div>
+              <div class="badge-desc">100+ completed orders</div>
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if avg_rating >= 4.8 %}
+          <div class="badge-item">
+            <span class="badge-icon">💎</span>
+            <div>
+              <div class="badge-title">Excellent Service</div>
+              <div class="badge-desc">4.8+ star rating</div>
+            </div>
+          </div>
+          {% elif avg_rating >= 4.5 %}
+          <div class="badge-item">
+            <span class="badge-icon">✨</span>
+            <div>
+              <div class="badge-title">Quality Service</div>
+              <div class="badge-desc">4.5+ star rating</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .vendor-profile-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .vendor-header {
+    background: linear-gradient(135deg, var(--purple), var(--dark-purple));
+    color: white;
+    border-radius: 16px;
+    padding: 40px;
+    margin-bottom: 30px;
+  }
+
+  .vendor-header-content {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    flex-wrap: wrap;
+  }
+
+  .vendor-avatar {
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: 700;
+    color: white;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .vendor-info {
+    flex: 1;
+    min-width: 300px;
+  }
+
+  .vendor-info h1 {
+    margin: 0 0 12px 0;
+    font-size: 32px;
+    color: white;
+  }
+
+  .vendor-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.9;
+    font-size: 14px;
+  }
+
+  .vendor-rating-summary {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 20px;
+    border-radius: 12px;
+    min-width: 150px;
+  }
+
+  .rating-number {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .rating-stars {
+    color: #ffa000;
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .rating-count {
+    font-size: 13px;
+    opacity: 0.9;
+  }
+
+  .vendor-content {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 30px;
+  }
+
+  .section-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 20px;
+  }
+
+  .section-card h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    color: #333;
+  }
+
+  .about-content p {
+    margin: 12px 0;
+    line-height: 1.6;
+  }
+
+  .services-offered {
+    margin: 16px 0;
+  }
+
+  .service-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .service-tag {
+    background: var(--purple);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .rating-distribution {
+    margin-bottom: 30px;
+  }
+
+  .rating-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+  }
+
+  .rating-label {
+    width: 40px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+  }
+
+  .rating-bar {
+    flex: 1;
+    height: 8px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .rating-bar-fill {
+    height: 100%;
+    background: #ffa000;
+    transition: width 0.3s;
+  }
+
+  .rating-count-label {
+    width: 40px;
+    text-align: right;
+    font-size: 13px;
+    color: #666;
+  }
+
+  .reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .review-card {
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 20px;
+  }
+
+  .review-card:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 12px;
+  }
+
+  .reviewer-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .reviewer-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--purple);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .reviewer-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+  }
+
+  .review-date {
+    font-size: 13px;
+    color: #999;
+  }
+
+  .review-rating {
+    color: #ffa000;
+    font-size: 16px;
+  }
+
+  .review-comment {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .review-meta {
+    font-size: 12px;
+    color: #999;
+  }
+
+  .empty-reviews {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+  }
+
+  .sidebar-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .sidebar-card h3 {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    color: #333;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .stat-row:last-child {
+    border-bottom: none;
+  }
+
+  .stat-label {
+    color: #666;
+    font-size: 14px;
+  }
+
+  .stat-value {
+    font-weight: 700;
+    color: var(--purple);
+    font-size: 16px;
+  }
+
+  .contact-info {
+    margin-bottom: 20px;
+  }
+
+  .contact-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .contact-row svg {
+    color: var(--purple);
+  }
+
+  .btn-block {
+    width: 100%;
+    text-align: center;
+    display: block;
+  }
+
+  .badges {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .badge-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 8px;
+  }
+
+  .badge-icon {
+    font-size: 24px;
+  }
+
+  .badge-title {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+  }
+
+  .badge-desc {
+    font-size: 12px;
+    color: #666;
+  }
+
+  .star {
+    color: #ddd;
+  }
+
+  .star.filled {
+    color: #ffa000;
+  }
+
+  @media (max-width: 768px) {
+    .vendor-content {
+      grid-template-columns: 1fr;
+    }
+
+    .vendor-header-content {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .vendor-info {
+      text-align: center;
+    }
+
+    .vendor-meta {
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}

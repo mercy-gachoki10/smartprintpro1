@@ -1,5 +1,7 @@
 import os
 import json
+import base64
+import requests
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -48,6 +50,33 @@ from models import (
     load_user_from_identity,
 )
 from sqlalchemy.exc import OperationalError
+
+
+def get_vendor_service_categories(vendor):
+    """
+    Map vendor service flags to actual database service categories.
+    This ensures orders are properly visible to vendors based on their capabilities.
+    """
+    categories = []
+    if vendor.service_document_printing:
+        categories.extend(["Document Printing", "Flyers & Brochures"])
+    if vendor.service_photos:
+        categories.extend(["Pictures / Photos", "Framing Options"])
+    if vendor.service_uniforms:
+        categories.append("Uniforms")
+    if vendor.service_merchandise:
+        categories.extend(["Custom Merchandise", "Packaging & Labels"])
+    if vendor.service_large_format:
+        categories.extend(["Banners (Digital & Vinyl)", "Signage"])
+    return categories
+
+
+def vendor_can_service_order(vendor, order):
+    """
+    Check if a vendor can service a specific order based on service category.
+    """
+    vendor_categories = get_vendor_service_categories(vendor)
+    return order.service_category in vendor_categories
 
 
 def create_app(config_class: type[DevelopmentConfig] | None = None):
@@ -100,7 +129,94 @@ def register_routes(app: Flask):
 
     @app.route("/vendors")
     def vendors():
-        return render_template("vendors.html")
+        # Get all active vendors with their statistics
+        vendors_list = Vendor.query.filter_by(active=True).order_by(Vendor.created_at.desc()).all()
+        
+        # Enrich vendor data with statistics
+        vendors_data = []
+        for vendor in vendors_list:
+            # Count completed orders for this vendor
+            completed_orders = Order.query.filter_by(
+                vendor_id=vendor.id,
+                status='completed'
+            ).count()
+            
+            # Calculate average rating
+            reviews = Review.query.filter_by(vendor_id=vendor.id).all()
+            avg_rating = sum(r.rating for r in reviews) / len(reviews) if reviews else 0
+            
+            # Get service tags
+            services = []
+            if vendor.service_document_printing:
+                services.append('Document Printing')
+            if vendor.service_photos:
+                services.append('Photos')
+            if vendor.service_uniforms:
+                services.append('Uniforms')
+            if vendor.service_merchandise:
+                services.append('Merchandise')
+            if vendor.service_large_format:
+                services.append('Large Format')
+            
+            vendors_data.append({
+                'vendor': vendor,
+                'completed_orders': completed_orders,
+                'avg_rating': avg_rating,
+                'review_count': len(reviews),
+                'services': services,
+                'service_tags': ','.join([s.lower().replace(' ', '-') for s in services])
+            })
+        
+        return render_template("vendors.html", vendors=vendors_data)
+
+    @app.route("/vendor/<int:vendor_id>")
+    def vendor_profile(vendor_id):
+        vendor = Vendor.query.get_or_404(vendor_id)
+        
+        # Get statistics
+        completed_orders = Order.query.filter_by(
+            vendor_id=vendor.id,
+            status='completed'
+        ).count()
+        
+        in_progress_orders = Order.query.filter(
+            Order.vendor_id == vendor.id,
+            Order.status.in_(['accepted', 'in_progress', 'processing', 'quality_check', 'ready_dispatch', 'dispatched'])
+        ).count()
+        
+        # Get reviews with customer info
+        reviews = Review.query.filter_by(vendor_id=vendor.id).order_by(Review.created_at.desc()).all()
+        avg_rating = sum(r.rating for r in reviews) / len(reviews) if reviews else 0
+        
+        # Get service tags
+        services = []
+        if vendor.service_document_printing:
+            services.append('Document Printing')
+        if vendor.service_photos:
+            services.append('Photos')
+        if vendor.service_uniforms:
+            services.append('Uniforms')
+        if vendor.service_merchandise:
+            services.append('Merchandise')
+        if vendor.service_large_format:
+            services.append('Large Format')
+        
+        # Rating distribution
+        rating_counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        for review in reviews:
+            rating_counts[review.rating] += 1
+        
+        return render_template(
+            "vendor_profile.html",
+            vendor=vendor,
+            completed_orders=completed_orders,
+            in_progress_orders=in_progress_orders,
+            reviews=reviews,
+            avg_rating=avg_rating,
+            review_count=len(reviews),
+            services=services,
+            rating_counts=rating_counts
+        )
 
     @app.route("/features")
     def features():
@@ -245,18 +361,8 @@ def register_routes(app: Flask):
         elif current_user.user_type == "vendor":
             from sqlalchemy import func, extract, or_
             
-            # Get vendor's service categories
-            vendor_services = []
-            if current_user.service_document_printing:
-                vendor_services.append("Document Printing")
-            if current_user.service_photos:
-                vendor_services.append("Photo Printing")
-            if current_user.service_uniforms:
-                vendor_services.append("Uniforms & Apparel")
-            if current_user.service_merchandise:
-                vendor_services.append("Merchandise")
-            if current_user.service_large_format:
-                vendor_services.append("Large Format")
+            # Get vendor's service categories using helper function
+            vendor_services = get_vendor_service_categories(current_user)
             
             # Get orders matching vendor's services that are open for quotes
             available_orders = Order.query.filter(
@@ -306,6 +412,7 @@ def register_routes(app: Flask):
                     "available": len(available_orders),
                     "my_quotes": len(my_quoted_orders),
                     "assigned": len(assigned_orders),
+                    "in_progress": len(assigned_orders),  # All assigned orders that aren't completed yet
                     "completed_this_month": completed_this_month,
                     "average_rating": avg_rating or 0
                 }
@@ -655,17 +762,11 @@ def register_routes(app: Flask):
         from flask_wtf import FlaskForm
         order = Order.query.get_or_404(order_id)
         
-        # Check if vendor can view this order (has matching service or already quoted/assigned)
-        vendor_can_view = False
-        if order.vendor_id == current_user.id:
-            vendor_can_view = True
-        elif order.service_category:
-            if (order.service_category == "Document Printing" and current_user.service_document_printing) or \
-               (order.service_category == "Photo Printing" and current_user.service_photos) or \
-               (order.service_category == "Uniforms & Apparel" and current_user.service_uniforms) or \
-               (order.service_category == "Merchandise" and current_user.service_merchandise) or \
-               (order.service_category == "Large Format" and current_user.service_large_format):
-                vendor_can_view = True
+        # Check if vendor can view this order using helper function
+        vendor_can_view = (
+            order.vendor_id == current_user.id or 
+            vendor_can_service_order(current_user, order)
+        )
         
         if not vendor_can_view:
             flash("You don't have access to this order.", "error")
@@ -721,16 +822,8 @@ def register_routes(app: Flask):
                 flash("This order is no longer accepting quotes.", "error")
             return redirect(url_for("dashboard"))
         
-        # Check service match
-        vendor_can_quote = False
-        if (order.service_category == "Document Printing" and current_user.service_document_printing) or \
-           (order.service_category == "Photo Printing" and current_user.service_photos) or \
-           (order.service_category == "Uniforms & Apparel" and current_user.service_uniforms) or \
-           (order.service_category == "Merchandise" and current_user.service_merchandise) or \
-           (order.service_category == "Large Format" and current_user.service_large_format):
-            vendor_can_quote = True
-        
-        if not vendor_can_quote:
+        # Check service match using helper function
+        if not vendor_can_service_order(current_user, order):
             flash("You don't offer the service required for this order.", "error")
             return redirect(url_for("dashboard"))
         
@@ -803,21 +896,20 @@ def register_routes(app: Flask):
         new_status = request.form.get("new_status")
         notes = request.form.get("notes", "")
         
-        # Validate status progression
-        valid_transitions = {
-            'in_progress': ['confirmed_received'],
-            'confirmed_received': ['processing'],
-            'processing': ['finished'],
-            'finished': ['quality_check'],
-            'quality_check': ['ready_dispatch'],
-            'ready_dispatch': ['dispatched'],
-            'dispatched': ['awaiting_payment', 'completed'],
-            'awaiting_payment': ['completed']
-        }
+        # Allow forward progression through workflow
+        status_order = [
+            'in_progress', 'confirmed_received', 'processing', 'finished',
+            'quality_check', 'ready_dispatch', 'dispatched', 'awaiting_payment', 'completed'
+        ]
         
-        if order.status not in valid_transitions or new_status not in valid_transitions.get(order.status, []):
-            flash(f"Invalid status transition from {order.status} to {new_status}", "error")
-            return redirect(url_for("vendor_view_order", order_id=order.id))
+        # Ensure we're moving forward in the workflow
+        if order.status in status_order and new_status in status_order:
+            current_idx = status_order.index(order.status)
+            new_idx = status_order.index(new_status)
+            
+            if new_idx <= current_idx:
+                flash("Cannot move backwards in order status.", "error")
+                return redirect(url_for("vendor_view_order", order_id=order.id))
         
         # Add status change with notes
         order.add_status_change(new_status, current_user.id, "vendor", notes)
@@ -829,10 +921,137 @@ def register_routes(app: Flask):
             order.dispatched_at = datetime.utcnow()
         elif new_status == 'completed':
             order.completed_at = datetime.utcnow()
+            order.payment_status = 'paid'  # Auto-mark as paid when vendor completes
         
         db.session.commit()
         
-        flash(f"Order status updated to {new_status.replace('_', ' ').title()}", "success")
+        flash(f"✅ Order status updated to {new_status.replace('_', ' ').title()}", "success")
+        return redirect(url_for("vendor_view_order", order_id=order.id))
+
+    def get_mpesa_access_token():
+        """Generate M-Pesa OAuth access token"""
+        api_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        
+        try:
+            response = requests.get(
+                api_url,
+                auth=(app.config['MPESA_CONSUMER_KEY'], app.config['MPESA_CONSUMER_SECRET']),
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json().get('access_token')
+        except Exception as e:
+            print(f"Error getting M-Pesa token: {e}")
+            return None
+    
+    def generate_mpesa_password(shortcode, passkey, timestamp):
+        """Generate M-Pesa password for STK Push"""
+        data_to_encode = f"{shortcode}{passkey}{timestamp}"
+        encoded = base64.b64encode(data_to_encode.encode())
+        return encoded.decode('utf-8')
+    
+    @app.route("/vendor/order/<int:order_id>/initiate-payment", methods=["POST"])
+    @roles_required("vendor")
+    def vendor_initiate_payment(order_id):
+        """Initiate M-Pesa STK Push to customer's phone"""
+        order = Order.query.get_or_404(order_id)
+        
+        if order.vendor_id != current_user.id:
+            return jsonify({"success": False, "message": "Unauthorized"}), 403
+        
+        if order.status != "awaiting_payment":
+            return jsonify({"success": False, "message": "Order not awaiting payment"}), 400
+        
+        # Get phone number from request
+        phone_number = request.json.get('phone_number')
+        if not phone_number or not phone_number.startswith('254'):
+            return jsonify({"success": False, "message": "Invalid phone number"}), 400
+        
+        # Get M-Pesa access token
+        access_token = get_mpesa_access_token()
+        if not access_token:
+            return jsonify({"success": False, "message": "Failed to connect to M-Pesa"}), 500
+        
+        # Generate timestamp and password
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        password = generate_mpesa_password(
+            app.config['MPESA_SHORTCODE'],
+            app.config['MPESA_PASSKEY'],
+            timestamp
+        )
+        
+        # Prepare STK Push request
+        api_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "BusinessShortCode": app.config['MPESA_SHORTCODE'],
+            "Password": password,
+            "Timestamp": timestamp,
+            "TransactionType": "CustomerPayBillOnline",
+            "Amount": int(order.total_amount),  # Amount must be integer
+            "PartyA": phone_number,
+            "PartyB": app.config['MPESA_SHORTCODE'],
+            "PhoneNumber": phone_number,
+            "CallBackURL": app.config['MPESA_CALLBACK_URL'],
+            "AccountReference": order.order_number,
+            "TransactionDesc": f"Payment for {order.order_number}"
+        }
+        
+        try:
+            response = requests.post(api_url, json=payload, headers=headers, timeout=30)
+            response_data = response.json()
+            
+            if response.status_code == 200 and response_data.get('ResponseCode') == '0':
+                # STK Push sent successfully
+                checkout_request_id = response_data.get('CheckoutRequestID')
+                return jsonify({
+                    "success": True,
+                    "message": "Payment request sent to customer's phone",
+                    "checkout_request_id": checkout_request_id,
+                    "phone_number": phone_number
+                })
+            else:
+                error_message = response_data.get('errorMessage', 'Failed to send payment request')
+                return jsonify({"success": False, "message": error_message}), 400
+        
+        except requests.exceptions.RequestException as e:
+            print(f"M-Pesa API Error: {e}")
+            return jsonify({"success": False, "message": "Network error. Please try again."}), 500
+
+    @app.route("/vendor/order/<int:order_id>/confirm-payment", methods=["POST"])
+    @roles_required("vendor")
+    def vendor_confirm_payment(order_id):
+        """Vendor confirms payment received from customer via M-Pesa"""
+        order = Order.query.get_or_404(order_id)
+        
+        if order.vendor_id != current_user.id:
+            flash("You don't have access to this order.", "error")
+            return redirect(url_for("dashboard"))
+        
+        if order.status != "awaiting_payment":
+            flash("This order is not awaiting payment.", "error")
+            return redirect(url_for("vendor_view_order", order_id=order.id))
+        
+        # Get payment details from form
+        payment_reference = request.form.get("payment_reference", "")
+        phone_number = request.form.get("phone_number", "")
+        
+        # Update order status to completed
+        order.status = "completed"
+        order.payment_status = "paid"
+        order.completed_at = datetime.utcnow()
+        
+        # Add status change with payment details
+        payment_notes = f"Payment received via M-Pesa. Reference: {payment_reference}, Customer Phone: {phone_number}"
+        order.add_status_change("completed", current_user.id, "vendor", payment_notes)
+        
+        db.session.commit()
+        
+        flash("✅ Payment confirmed! Order completed successfully.", "success")
         return redirect(url_for("vendor_view_order", order_id=order.id))
 
     # Customer Routes
@@ -896,7 +1115,7 @@ def register_routes(app: Flask):
                     other_quote.customer_response = "Customer selected another vendor"
                     other_quote.responded_at = datetime.utcnow()
             
-            order.add_status_change("accepted", current_user.id, "customer", 
+            order.add_status_change("in_progress", current_user.id, "customer", 
                                    f"Customer accepted quote from {quote.vendor.business_name}")
             
             flash(f"Quote accepted! {quote.vendor.business_name} will begin working on your order.", "success")
@@ -921,24 +1140,15 @@ def register_routes(app: Flask):
     @app.route("/customer/order/<int:order_id>/confirm-receipt", methods=["POST"])
     @roles_required("customer")
     def customer_confirm_receipt(order_id):
-        """Confirm receipt of completed order"""
+        """Customer can view receipt confirmation (informational only)"""
         order = Order.query.get_or_404(order_id)
         
         if order.customer_id != current_user.id:
             flash("You don't have access to this order.", "error")
             return redirect(url_for("dashboard"))
         
-        if order.status != "dispatched":
-            flash("Order is not ready for confirmation.", "error")
-            return redirect(url_for("customer_view_order", order_id=order.id))
-        
-        order.add_status_change("completed", current_user.id, "customer", 
-                               "Customer confirmed receipt")
-        order.completed_at = datetime.utcnow()
-        
-        db.session.commit()
-        
-        flash("Order marked as completed! Please leave a review.", "success")
+        # This is now just informational - vendor controls the status
+        flash("Thank you! The vendor will confirm delivery and complete the order.", "info")
         return redirect(url_for("customer_view_order", order_id=order.id))
 
     @app.route("/customer/order/<int:order_id>/review", methods=["POST"])

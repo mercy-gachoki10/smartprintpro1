@@ -12,177 +12,86 @@
       <input id="q" aria-label="Search vendors" placeholder="Search by name, location, or service..." />
       <button id="searchBtn" aria-label="Search button">Search</button>
     </div>
-
-    <div class="categories">
-      <div class="cat" onclick="quickSearch('nairobi')">Nairobi</div>
-      <div class="cat" onclick="quickSearch('mombasa')">Mombasa</div>
-      <div class="cat" onclick="quickSearch('kisumu')">Kisumu</div>
-      <div class="cat" onclick="quickSearch('premium')">Premium</div>
-      <div class="cat" onclick="quickSearch('fast-delivery')">Fast Delivery</div>
-    </div>
   </section>
 
   <!-- MAIN VENDORS LIST -->
   <main class="container">
     <h3 style="color:var(--purple)">All Vendors</h3>
+    
+    {% if vendors and vendors|length > 0 %}
     <div id="vendors" class="grid" style="margin-top:12px">
-      
-      <!-- Nairobi Vendors -->
-      <div class="vendor" data-tags="nairobi,design,banners,uniform" aria-label="GraphicDesign Nairobi vendor">
+      {% for v in vendors %}
+      {# Set background colors array and calculate index #}
+      {% set bg_colors = ['#c9f1ff', '#f2e2b2', '#ffe5b4', '#d4d4ff', '#ffd4d4', '#e5d4ff'] %}
+      {% set color_index = loop.index0 % 6 %}
+      {% set vendor_bg = bg_colors[color_index] %}
+      <div class="vendor" data-tags="{{ v.service_tags }},{{ v.vendor.business_address|lower if v.vendor.business_address else '' }}" aria-label="{{ v.vendor.business_name }} vendor">
         <div>
           <div class="title">
-            <div class="logoSmall" style="background:#c9f1ff;color:#000">GD</div>
+            <div class="logoSmall" style="background:{{ vendor_bg }};color:#000;">
+              {{ v.vendor.business_name[:2].upper() }}
+            </div>
             <div>
-              <h4>GraphicDesign Nairobi</h4>
-              <div style="color:var(--muted);font-size:13px">📍 Westlands, Nairobi</div>
+              <h4>{{ v.vendor.business_name }} 
+                {% if v.completed_orders > 100 %}
+                <span style="font-size:12px;color:var(--muted)">(Premium)</span>
+                {% endif %}
+              </h4>
+              <div style="color:var(--muted);font-size:13px">
+                📍 {{ v.vendor.business_address if v.vendor.business_address else 'Kenya' }}
+              </div>
             </div>
           </div>
-          <div style="margin-top:8px;font-size:13px">Design • Print • Uniforms • Banners</div>
-          <div class="meta">Rating: ★★★★★ • 145 orders • Fast delivery</div>
-        </div>
-        <div>
-          <button class="viewBtn" onclick="viewShop('GraphicDesign Nairobi')">View Profile</button>
-          <button class="visitBtn" onclick="openContact('GraphicDesign Nairobi')">Contact</button>
-        </div>
-      </div>
-
-      <div class="vendor" data-tags="nairobi,short-run,premium,digital" aria-label="BoldPrint vendor">
-        <div>
-          <div class="title">
-            <div class="logoSmall">BP</div>
-            <div>
-              <h4>BoldPrint <span style="font-size:12px;color:var(--muted)">(Premium)</span></h4>
-              <div style="color:var(--muted);font-size:13px">📍 Karen, Nairobi</div>
-            </div>
+          
+          <div style="margin-top:8px;font-size:13px">
+            {% if v.services %}
+              {{ v.services|join(' • ') }}
+            {% else %}
+              General Printing Services
+            {% endif %}
           </div>
-          <div style="margin-top:8px;font-size:13px">Short-run • Digital • T-shirts • Merchandise</div>
-          <div class="meta">Rating: ★★★★☆ • 320 orders • Premium quality</div>
-        </div>
-        <div>
-          <button class="viewBtn" onclick="viewShop('BoldPrint')">View Profile</button>
-          <button class="visitBtn" onclick="openContact('BoldPrint')">Contact</button>
-        </div>
-      </div>
-
-      <div class="vendor" data-tags="nairobi,signage,large-format,fast-delivery" aria-label="SPU Print vendor">
-        <div>
-          <div class="title">
-            <div class="logoSmall" style="background:#f2e2b2;color:#000">SPU</div>
-            <div>
-              <h4>SPU Print</h4>
-              <div style="color:var(--muted);font-size:13px">📍 Industrial Area, Nairobi</div>
-            </div>
+          
+          <div class="meta">
+            Rating: 
+            {% if v.avg_rating >= 4.5 %}★★★★★
+            {% elif v.avg_rating >= 3.5 %}★★★★☆
+            {% elif v.avg_rating >= 2.5 %}★★★☆☆
+            {% elif v.avg_rating >= 1.5 %}★★☆☆☆
+            {% elif v.avg_rating > 0 %}★☆☆☆☆
+            {% else %}No ratings yet
+            {% endif %}
+            
+            {% if v.completed_orders > 0 %}
+              • {{ v.completed_orders }} order{{ 's' if v.completed_orders != 1 else '' }}
+            {% endif %}
+            
+            {% if v.completed_orders > 200 %}
+              • Fast delivery
+            {% elif v.completed_orders > 100 %}
+              • Premium quality
+            {% endif %}
           </div>
-          <div style="margin-top:8px;font-size:13px">Large format • Signage • Vinyl • Billboards</div>
-          <div class="meta">Rating: ★★★★★ • 210 orders • 24-48hr delivery</div>
         </div>
-        <div>
-          <button class="viewBtn" onclick="viewShop('SPU Print')">View Profile</button>
-          <button class="visitBtn" onclick="openContact('SPU Print')">Contact</button>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="viewBtn" onclick="viewShop('{{ v.vendor.business_name|replace("'", "\\'") }}', {{ v.vendor.id }})">View Profile</button>
+          <button class="visitBtn" onclick="openContact('{{ v.vendor.business_name|replace("'", "\\'") }}', '{{ v.vendor.email }}', '{{ v.vendor.phone }}')">Contact</button>
         </div>
       </div>
-
-      <!-- Mombasa Vendors -->
-      <div class="vendor" data-tags="mombasa,print,design,fast-delivery" aria-label="Coastal Prints vendor">
-        <div>
-          <div class="title">
-            <div class="logoSmall" style="background:#ffe5b4;color:#000">CP</div>
-            <div>
-              <h4>Coastal Prints</h4>
-              <div style="color:var(--muted);font-size:13px">📍 Mombasa CBD, Mombasa</div>
-            </div>
-          </div>
-          <div style="margin-top:8px;font-size:13px">Flyers • Brochures • Banners • Event prints</div>
-          <div class="meta">Rating: ★★★★☆ • 87 orders • Ready same-day</div>
-        </div>
-        <div>
-          <button class="viewBtn" onclick="viewShop('Coastal Prints')">View Profile</button>
-          <button class="visitBtn" onclick="openContact('Coastal Prints')">Contact</button>
-        </div>
-      </div>
-
-      <div class="vendor" data-tags="mombasa,premium,corporate,custom" aria-label="Elite Printing Services vendor">
-        <div>
-          <div class="title">
-            <div class="logoSmall" style="background:#d4d4ff;color:#000">EP</div>
-            <div>
-              <h4>Elite Printing Services</h4>
-              <div style="color:var(--muted);font-size:13px">📍 Kenyatta Avenue, Mombasa</div>
-            </div>
-          </div>
-          <div style="margin-top:8px;font-size:13px">Corporate • Premium packaging • Custom printing</div>
-          <div class="meta">Rating: ★★★★★ • 156 orders • Premium service</div>
-        </div>
-        <div>
-          <button class="viewBtn" onclick="viewShop('Elite Printing Services')">View Profile</button>
-          <button class="visitBtn" onclick="openContact('Elite Printing Services')">Contact</button>
-        </div>
-      </div>
-
-      <!-- Kisumu Vendor -->
-      <div class="vendor" data-tags="kisumu,print,local" aria-label="Kisumu Print Hub vendor">
-        <div>
-          <div class="title">
-            <div class="logoSmall" style="background:#b4e7ff;color:#000">KP</div>
-            <div>
-              <h4>Kisumu Print Hub</h4>
-              <div style="color:var(--muted);font-size:13px">📍 Kisumu Town, Kisumu</div>
-            </div>
-          </div>
-          <div style="margin-top:8px;font-size:13px">General printing • Design • Local delivery</div>
-          <div class="meta">Rating: ★★★★☆ • 62 orders • Community-focused</div>
-        </div>
-        <div>
-          <button class="viewBtn" onclick="viewShop('Kisumu Print Hub')">View Profile</button>
-          <button class="visitBtn" onclick="openContact('Kisumu Print Hub')">Contact</button>
-        </div>
-      </div>
-
-      <!-- More Vendors -->
-      <div class="vendor" data-tags="nairobi,merchandise,t-shirt,custom" aria-label="CustomThreads vendor">
-        <div>
-          <div class="title">
-            <div class="logoSmall" style="background:#ffd4d4;color:#000">CT</div>
-            <div>
-              <h4>CustomThreads Kenya</h4>
-              <div style="color:var(--muted);font-size:13px">📍 Embakasi, Nairobi</div>
-            </div>
-          </div>
-          <div style="margin-top:8px;font-size:13px">T-shirts • Hoodies • Caps • Embroidery</div>
-          <div class="meta">Rating: ★★★★☆ • 203 orders • Bulk discounts</div>
-        </div>
-        <div>
-          <button class="viewBtn" onclick="viewShop('CustomThreads Kenya')">View Profile</button>
-          <button class="visitBtn" onclick="openContact('CustomThreads Kenya')">Contact</button>
-        </div>
-      </div>
-
-      <div class="vendor" data-tags="mombasa,packaging,boxes,premium" aria-label="PrintPack Solutions vendor">
-        <div>
-          <div class="title">
-            <div class="logoSmall" style="background:#e5d4ff;color:#000">PS</div>
-            <div>
-              <h4>PrintPack Solutions</h4>
-              <div style="color:var(--muted);font-size:13px">📍 Port Reitz, Mombasa</div>
-            </div>
-          </div>
-          <div style="margin-top:8px;font-size:13px">Packaging boxes • Labels • Custom boxes</div>
-          <div class="meta">Rating: ★★★★☆ • 134 orders • Wholesale available</div>
-        </div>
-        <div>
-          <button class="viewBtn" onclick="viewShop('PrintPack Solutions')">View Profile</button>
-          <button class="visitBtn" onclick="openContact('PrintPack Solutions')">Contact</button>
-        </div>
-      </div>
-
+      {% endfor %}
     </div>
+    {% else %}
+    <div style="text-align:center;padding:40px;color:var(--muted)">
+      <p style="font-size:18px">🔍 No vendors registered yet.</p>
+      <p>Check back soon as we onboard print shops across Kenya!</p>
+    </div>
+    {% endif %}
 
     <!-- VENDOR STATS -->
     <section id="stats" style="margin-top:40px;background:linear-gradient(135deg, var(--purple), #571590);color:#fff;padding:32px;border-radius:12px;text-align:center">
       <h3>SmartPrint Pro Coverage in Kenya</h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:20px;margin-top:20px">
         <div>
-          <div style="font-size:28px;font-weight:800">50+</div>
+          <div style="font-size:28px;font-weight:800">{{ vendors|length if vendors else 0 }}+</div>
           <div style="opacity:0.9">Vendors nationwide</div>
         </div>
         <div>
@@ -190,7 +99,13 @@
           <div style="opacity:0.9">Cities covered</div>
         </div>
         <div>
-          <div style="font-size:28px;font-weight:800">5000+</div>
+          <div style="font-size:28px;font-weight:800">
+            {% set total_orders = namespace(count=0) %}
+            {% for v in vendors %}
+              {% set total_orders.count = total_orders.count + v.completed_orders %}
+            {% endfor %}
+            {{ total_orders.count if vendors else 0 }}+
+          </div>
           <div style="opacity:0.9">Successful orders</div>
         </div>
         <div>
@@ -204,30 +119,65 @@
 
   {% block extra_js %}
   <script>
-    // quick search (locations/filters)
-    function quickSearch(term){
-      document.getElementById('q').value = term;
-      filterVendors();
-    }
-
     // search filter for vendor cards
     const qInput = document.getElementById('q');
-    document.getElementById('searchBtn').addEventListener('click', filterVendors);
-    qInput.addEventListener('input', filterVendors);
-
-    function filterVendors(){
-      const query = qInput.value.trim().toLowerCase();
-      document.querySelectorAll('.vendor').forEach(card => {
-        const tags = (card.dataset.tags || '').toLowerCase();
-        const text = card.innerText.toLowerCase();
-        const match = query === '' || tags.includes(query) || text.includes(query);
-        card.style.display = match ? '' : 'none';
+    const searchBtn = document.getElementById('searchBtn');
+    
+    if (searchBtn && qInput) {
+      searchBtn.addEventListener('click', filterVendors);
+      qInput.addEventListener('input', filterVendors);
+      qInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+          filterVendors();
+        }
       });
     }
 
-    // view shop (demo)
-    function viewShop(name){
-      alert('Opening vendor profile for: ' + name + ' (demo)');
+    function filterVendors(){
+      const query = qInput.value.trim().toLowerCase();
+      const vendorCards = document.querySelectorAll('.vendor');
+      let visibleCount = 0;
+      
+      vendorCards.forEach(card => {
+        const tags = (card.dataset.tags || '').toLowerCase();
+        const text = card.innerText.toLowerCase();
+        const match = query === '' || tags.includes(query) || text.includes(query);
+        
+        if (match) {
+          card.style.display = '';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      
+      // Show "no results" message if nothing matches
+      let noResultsMsg = document.getElementById('noResultsMsg');
+      if (visibleCount === 0 && query !== '') {
+        if (!noResultsMsg) {
+          noResultsMsg = document.createElement('div');
+          noResultsMsg.id = 'noResultsMsg';
+          noResultsMsg.style.cssText = 'text-align:center;padding:40px;color:var(--muted);grid-column:1/-1;';
+          noResultsMsg.innerHTML = '<p style="font-size:18px">🔍 No vendors found matching "' + query + '"</p><p>Try searching for a different location or service.</p>';
+          document.getElementById('vendors').appendChild(noResultsMsg);
+        }
+      } else if (noResultsMsg) {
+        noResultsMsg.remove();
+      }
+    }
+
+    // view shop (navigate to vendor profile)
+    function viewShop(name, vendorId){
+      window.location.href = '/vendor/' + vendorId;
+    }
+
+    // open contact info
+    function openContact(name, email, phone){
+      const message = 'Contact ' + name + ':\n\n' +
+                     '📧 Email: ' + email + '\n' +
+                     '📱 Phone: ' + phone + '\n\n' +
+                     'You can reach out directly to discuss your printing needs.';
+      alert(message);
     }
   </script>
   {% endblock %}

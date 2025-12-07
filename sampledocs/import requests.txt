@@ -1,0 +1,38 @@
+
+import requests
+
+url = "https://api.safaricom.co.ke/YOUR_ENDPOINT"
+payload = {
+  "Password": "MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjUxMjA2MTExNDQy",
+  "BusinessShortCode": "174379",
+  "Timestamp": "20251206111442",
+  "Amount": "1",
+  "PartyA": "254708374149",
+  "PartyB": "174379",
+  "TransactionType": "CustomerPayBillOnline",
+  "PhoneNumber": "254717962362",
+  "TransactionDesc": "SmartPrintPro",
+  "AccountReference": "Test",
+  "CallBackURL": "https://mydomain.com/mpesa-express-simulate/"
+}
+
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer <ACCESS_TOKEN>"
+}
+
+response = requests.post(url, json=payload, headers=headers)
+print(response.json())
+
+
+{
+  "MerchantRequestID": "ddb8-4a08-af32-c0e1ff1c640618378",
+  "CheckoutRequestID": "ws_CO_06122025111443824717962362",
+  "ResponseCode": "0",
+  "ResponseDescription": "Success. Request accepted for processing",
+  "CustomerMessage": "Success. Request accepted for processing"
+}
+
+
+ZLBe5S5AiBtTCuxn9QyEUL6hJd18A2oIvEz4P2wiPYezqNai Consumer key
+hCot1cjNpwVXZswzprmMwKrCXaYkga6DsqUvhZQg2rfVXkL4kz7xJ3OpIprIbe7y Consumer Secret
