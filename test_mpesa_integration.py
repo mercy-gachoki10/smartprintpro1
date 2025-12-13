@@ -75,7 +75,7 @@ def test_stk_push_structure(access_token):
         "TransactionType": "CustomerPayBillOnline",
         "Amount": 1,  # Test with 1 KSh
         "PartyA": "254708374149",  # Test phone from Postman
-        "PartyB": MPESA_SHORTCODE,
+        "PartyB": "254717962362",
         "PhoneNumber": "254708374149",
         "CallBackURL": "https://mydomain.com/mpesa/callback",
         "AccountReference": "TEST_ORDER",
